@@ -1,0 +1,125 @@
+# Cursor Rules
+
+## Instructions
+
+- Record fixes for mistakes or corrections to avoid repetition in the `Lessons` section.
+- Organize thoughts and plan steps before starting a task in the `Scratchpad` section.
+- Clear old tasks if necessary.
+- Use todo markers for progress tracking:
+  - `[X]` Completed tasks
+  - `[ ]` Pending tasks
+- Update Scratchpad after completing subtasks.
+- Reflect and plan after milestones for better task management.
+- Always refer to Scratchpad before planning the next step.
+
+## Lessons
+
+## Scratchpad
+
+Phase 1: Foundation & Setup ✅ COMPLETED
+Goal: Get the basic project structure and core UI components working
+Frontend Setup:
+[X] Initialize React project with TypeScript
+[X] Set up shadcn/ui components
+[X] Create basic dashboard layout
+[X] Implement responsive design structure
+Backend Setup:
+[X] Initialize Node.js + Express server
+[X] Set up database connection (MongoDB configured)
+[ ] Configure AWS S3 integration (basic structure ready)
+[X] Create basic API endpoints structure
+Core Components:
+[X] Dashboard navigation/sidebar
+[X] Header with user info
+[X] Grid layout for widgets
+
+Phase 2: LeetCode Tracking System ✅ COMPLETED
+Goal: Build the manual LeetCode entry and analytics system
+Data Management:
+[X] Design LeetCode problem schema (problem name, difficulty, topic, time taken, date, success rate)
+[X] Create database tables/collections
+[X] Build CRUD API endpoints for problems
+UI Components:
+[X] LeetCode entry form (shadcn Form + Input components)
+[X] Problems table/spreadsheet view (shadcn Table)
+[X] Analytics dashboard with charts
+[X] Filtering and sorting functionality
+Analytics Features:
+[X] Difficulty distribution charts
+[X] Topic/pattern analysis
+[X] Time tracking metrics
+[X] Success rate calculations
+[X] Weekly/monthly progress charts
+
+PHASE 2 SUMMARY:
+✅ Complete MongoDB schema with indexes and validation
+✅ Full CRUD API with filtering, sorting, pagination
+✅ Comprehensive form with topic selection and validation
+✅ Advanced table with sorting, search, and actions
+✅ Rich analytics with multiple chart types
+✅ Professional UI with responsive design
+✅ Complete LeetCode tracking system ready for use
+
+Phase 3: Productivity Features
+Goal: Add Pomodoro timer and todo list functionality
+Pomodoro Timer:
+[ ] Timer component with start/pause/reset
+[ ] Session type selection (work/short break/long break)
+[ ] Browser notifications for breaks
+[ ] Session history tracking
+[ ] Integration with daily tasks
+Weekly Todo System:
+[ ] Daily task lists for each day of the week
+[ ] Task creation, editing, deletion
+[ ] Task completion tracking
+[ ] Drag and drop between days
+[ ] Task categories/priorities
+
+Phase 4: External Integrations
+Goal: Connect GitHub and Spotify APIs
+GitHub Integration:
+[ ] Set up GitHub API authentication
+[ ] Fetch and display contribution chart
+[ ] Repository activity summary
+[ ] Commit streak tracking
+Spotify Integration:
+[ ] Set up Spotify Web API authentication
+[ ] Current playing track display
+[ ] Playback controls (play/pause/skip)
+[ ] Mini player widget
+[ ] Playlist integration (optional)
+
+Phase 5: Job Scraping & Tracking
+Goal: Automate job posting monitoring
+Web Scraping:
+[ ] Identify the 3 main GitHub job posting URLs
+[ ] Build scraping logic with Puppeteer/Cheerio
+[ ] Implement deduplication logic
+[ ] Set up scheduled scraping (daily cron jobs)
+Job Management:
+[ ] Job posting display interface
+[ ] Filtering by date, company, location
+[ ] Mark jobs as "interested" or "applied"
+[ ] Application status tracking
+
+Phase 6: Deployment & Polish
+Goal: Deploy the application and add finishing touches
+Deployment:
+[ ] Deploy backend to AWS/Railway/Render
+[ ] Deploy frontend to Vercel/Netlify
+[ ] Configure environment variables
+[ ] Set up production database
+Polish & Optimization:
+[ ] Add loading states and error handling
+[ ] Implement data export functionality
+[ ] Add keyboard shortcuts
+[ ] Performance optimization
+[ ] Mobile responsiveness testing
+Phase 7: Advanced Features (Future)
+Goal: Enhance the dashboard with additional productivity features
+Nice-to-Have Features:
+[ ] Dark/light theme toggle
+[ ] Data backup/restore
+[ ] Weekly/monthly reports
+[ ] Goal setting and tracking
+[ ] Integration with calendar apps
