@@ -18,7 +18,9 @@ import {
   User, 
   ChevronLeft, 
   ChevronRight,
-  Sparkles 
+  Sparkles,
+  Target,
+  Globe
 } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 
@@ -123,6 +125,8 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
   const navItems = [
     { to: '/', icon: Home, label: 'Overview' },
     { to: '/leetcode', icon: BookOpen, label: 'LeetCode' },
+    { to: '/productivity', icon: Target, label: 'Productivity' },
+    { to: '/integrations', icon: Globe, label: 'Integrations' },
     { to: '/analytics', icon: BarChart3, label: 'Analytics' },
     { to: '/jobs', icon: BriefcaseIcon, label: 'Jobs' },
   ]

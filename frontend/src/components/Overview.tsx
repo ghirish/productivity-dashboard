@@ -1,379 +1,586 @@
 import React, { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
+import { Button } from './ui/button'
+import { Badge } from './ui/badge'
+import { Progress } from './ui/progress'
 import { 
-  CheckCircle, 
-  Flame, 
-  Briefcase, 
+  Plus, 
+  TrendingUp, 
+  BookOpen, 
   Clock, 
+  CheckCircle, 
   Target, 
-  TrendingUp,
+  Activity, 
   Calendar,
+  Coffee,
+  Brain,
+  ChevronRight,
+  Trophy,
+  Star,
   Zap,
-  Award,
-  GitBranch,
-  Plus
+  Code,
+  Flame,
+  Github,
+  Music,
+  Users
 } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { SpotifyMiniPlayer } from './SpotifyMiniPlayer'
 
-interface StatCardProps {
+// Productivity data types
+interface TodayTask {
+  id: string
   title: string
-  value: string | number
-  subtitle: string
-  icon: React.ReactNode
-  trend?: string
-  trendDirection?: 'up' | 'down'
-  progress?: number
-  delay?: number
+  completed: boolean
+  priority: 'low' | 'medium' | 'high'
 }
 
-const StatCard: React.FC<StatCardProps> = ({ 
-  title, 
-  value, 
-  subtitle, 
-  icon, 
-  trend, 
-  trendDirection = 'up',
-  progress = 0,
-  delay = 0
-}) => {
-  const [animatedValue, setAnimatedValue] = useState(0)
-  const [isVisible, setIsVisible] = useState(false)
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsVisible(true)
-      // Animate the number if it's numeric
-      if (typeof value === 'number' || (typeof value === 'string' && !isNaN(Number(value.split(' ')[0])))) {
-        const targetValue = typeof value === 'number' ? value : Number(value.split(' ')[0])
-        let start = 0
-        const duration = 2000
-        const increment = targetValue / (duration / 16)
-        
-        const animate = () => {
-          start += increment
-          if (start < targetValue) {
-            setAnimatedValue(Math.floor(start))
-            requestAnimationFrame(animate)
-          } else {
-            setAnimatedValue(targetValue)
-          }
-        }
-        animate()
-      }
-    }, delay)
-
-    return () => clearTimeout(timer)
-  }, [value, delay])
-
-  const displayValue = typeof value === 'number' || (typeof value === 'string' && !isNaN(Number(value.split(' ')[0])))
-    ? (typeof value === 'number' ? animatedValue : `${animatedValue}${value.substring(String(Number(value.split(' ')[0])).length)}`)
-    : value
-
-  return (
-    <div className={`stat-card glow-effect transform transition-all duration-700 ${
-      isVisible ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
-    }`}>
-      {/* Progress bar at top */}
-      {progress > 0 && (
-        <div className="absolute top-0 left-0 h-1 bg-gradient-to-r from-primary to-purple-500 rounded-t-2xl"
-             style={{ width: `${progress}%`, transition: 'width 2s ease-out' }} />
-      )}
-      
-      <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-        <div className="space-y-1">
-          <CardTitle className="text-sm font-medium text-slate-600 dark:text-slate-300">
-            {title}
-          </CardTitle>
-          {trend && (
-            <div className={`flex items-center gap-1 text-xs ${
-              trendDirection === 'up' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
-            }`}>
-              <TrendingUp className={`w-3 h-3 ${trendDirection === 'down' ? 'rotate-180' : ''}`} />
-              {trend}
-            </div>
-          )}
-        </div>
-        <div className="p-2 rounded-xl bg-gradient-to-br from-primary/20 to-purple-500/20 
-                        group-hover:scale-110 transition-transform duration-300">
-          {icon}
-        </div>
-      </CardHeader>
-      
-      <CardContent>
-        <div className="space-y-1">
-          <div className="metric-value gradient-text">
-            {displayValue}
-          </div>
-          <p className="text-xs subtitle-text">
-            {subtitle}
-          </p>
-        </div>
-      </CardContent>
-    </div>
-  )
-}
-
-interface TaskItemProps {
-  task: string
-  completed?: boolean
-  priority?: 'high' | 'medium' | 'low'
-  onToggle?: () => void
-}
-
-const TaskItem: React.FC<TaskItemProps> = ({ task, completed = false, priority = 'medium', onToggle }) => {
-  const priorityColors = {
-    high: 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950',
-    medium: 'border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-950',
-    low: 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950'
-  }
-
-  return (
-    <div className={`task-item ${priorityColors[priority]} border rounded-lg`}>
-      <div className="flex items-center space-x-3">
-        <div className="relative">
-          <input
-            type="checkbox"
-            checked={completed}
-            onChange={onToggle}
-            className="w-5 h-5 rounded-md border-2 border-primary text-primary 
-                       focus:ring-primary/20 focus:ring-2 transition-all duration-200
-                       checked:bg-primary checked:border-primary"
-          />
-          {completed && (
-            <CheckCircle className="absolute inset-0 w-5 h-5 text-white pointer-events-none" />
-          )}
-        </div>
-        <span className={`flex-1 transition-all duration-200 ${
-          completed ? 'line-through text-slate-400 dark:text-slate-500' : 'text-slate-700 dark:text-slate-200'
-        }`}>
-          {task}
-        </span>
-        <div className={`w-2 h-2 rounded-full ${
-          priority === 'high' ? 'bg-red-500' : 
-          priority === 'medium' ? 'bg-yellow-500' : 'bg-green-500'
-        }`} />
-      </div>
-    </div>
-  )
-}
-
-// Circular Progress Component
-interface CircularProgressProps {
-  value: number
-  max: number
-  size?: number
-  strokeWidth?: number
-  label: string
-}
-
-const CircularProgress: React.FC<CircularProgressProps> = ({ 
-  value, 
-  max, 
-  size = 120, 
-  strokeWidth = 8,
-  label 
-}) => {
-  const radius = (size - strokeWidth) / 2
-  const circumference = radius * 2 * Math.PI
-  const offset = circumference - (value / max) * circumference
-  const percentage = Math.round((value / max) * 100)
-
-  return (
-    <div className="flex flex-col items-center space-y-2">
-      <div className="relative">
-        <svg width={size} height={size} className="progress-ring">
-          <circle
-            cx={size / 2}
-            cy={size / 2}
-            r={radius}
-            stroke="currentColor"
-            strokeWidth={strokeWidth}
-            fill="none"
-            className="text-slate-200 dark:text-slate-700"
-          />
-          <circle
-            cx={size / 2}
-            cy={size / 2}
-            r={radius}
-            strokeDasharray={circumference}
-            strokeDashoffset={offset}
-            className="progress-ring-circle"
-            style={{ 
-              transition: 'stroke-dashoffset 2s ease-in-out',
-              filter: 'drop-shadow(0 0 6px hsl(var(--primary) / 0.5))'
-            }}
-          />
-        </svg>
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-center">
-            <div className="text-2xl font-bold gradient-text">{value}</div>
-            <div className="text-xs text-slate-500 dark:text-slate-400">of {max}</div>
-          </div>
-        </div>
-      </div>
-      <span className="text-sm font-medium text-slate-600 dark:text-slate-300">{label}</span>
-    </div>
-  )
+interface TaskData {
+  id: string
+  title: string
+  description: string
+  completed: boolean
+  priority: 'low' | 'medium' | 'high'
+  category: 'work' | 'personal' | 'learning' | 'health' | 'other'  
+  estimatedTime: number
+  day: string
 }
 
 export const Overview: React.FC = () => {
-  const [tasks, setTasks] = useState([
-    { id: 1, task: 'Complete 3 LeetCode problems', completed: false, priority: 'high' as const },
-    { id: 2, task: 'Apply to 2 new job postings', completed: false, priority: 'medium' as const },
-    { id: 3, task: 'Review GitHub repositories', completed: true, priority: 'low' as const },
-    { id: 4, task: 'Update portfolio website', completed: false, priority: 'medium' as const },
-  ])
+  // Mock data - in real app, this would come from state/API
+  const [leetCodeStreak, setLeetCodeStreak] = useState(7)
+  const [problemsSolved, setProblemsSolved] = useState(142)
+  const [weeklyGoal, setWeeklyGoal] = useState(5)
+  const [todayTasks, setTodayTasks] = useState<TaskData[]>([])
+  const [pomodoroSessionsToday, setPomodoroSessionsToday] = useState(0)
+  const [githubData, setGithubData] = useState<any>(null)
 
-  const toggleTask = (id: number) => {
-    setTasks(tasks.map(task => 
-      task.id === id ? { ...task, completed: !task.completed } : task
-    ))
+  // Get today's day string
+  const today = new Date().toLocaleDateString('en-US', { weekday: 'long' })
+
+  // Load today's tasks from localStorage
+  useEffect(() => {
+    const savedTasks = localStorage.getItem('weeklyTodos')
+    if (savedTasks) {
+      const weeklyData = JSON.parse(savedTasks)
+      const tasks = weeklyData[today] || []
+      setTodayTasks(tasks.slice(0, 3)) // Show first 3 tasks
+    }
+  }, [today])
+
+  // Load today's Pomodoro sessions
+  useEffect(() => {
+    const savedSessions = localStorage.getItem('pomodoroSessions')
+    if (savedSessions) {
+      const sessions = JSON.parse(savedSessions)
+      const todayStr = new Date().toDateString()
+      const todaySessions = sessions.filter((session: any) => 
+        new Date(session.startTime).toDateString() === todayStr && 
+        session.type === 'work'
+      )
+      setPomodoroSessionsToday(todaySessions.length)
+    }
+  }, [])
+
+  // Load GitHub data
+  useEffect(() => {
+    const fetchGitHubPreview = async () => {
+      try {
+        const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000'
+        const [userRes, contributionsRes] = await Promise.allSettled([
+          fetch(`${API_BASE}/api/github/user`),
+          fetch(`${API_BASE}/api/github/contributions`)
+        ])
+
+        const data: any = {}
+        
+        if (userRes.status === 'fulfilled' && userRes.value.ok) {
+          data.user = await userRes.value.json()
+        }
+        
+        if (contributionsRes.status === 'fulfilled' && contributionsRes.value.ok) {
+          data.contributions = await contributionsRes.value.json()
+        }
+        
+        if (Object.keys(data).length > 0) {
+          setGithubData(data)
+        }
+      } catch (error) {
+        console.error('Failed to fetch GitHub preview:', error)
+      }
+    }
+
+    fetchGitHubPreview()
+  }, [])
+
+  const completedToday = todayTasks.filter(task => task.completed).length
+
+  const stats = [
+    {
+      title: 'LeetCode Streak',
+      value: leetCodeStreak,
+      unit: 'days',
+      icon: BookOpen,
+      color: 'text-emerald-600 dark:text-emerald-400',
+      bg: 'bg-emerald-50 dark:bg-emerald-950/30',
+      trend: '+2 from yesterday'
+    },
+    {
+      title: 'Problems Solved',
+      value: problemsSolved,
+      unit: 'total',
+      icon: Target,
+      color: 'text-blue-600 dark:text-blue-400',
+      bg: 'bg-blue-50 dark:bg-blue-950/30',
+      trend: 'All time record!'
+    },
+    {
+      title: 'Focus Sessions',
+      value: pomodoroSessionsToday,
+      unit: 'today',
+      icon: Brain,
+      color: 'text-purple-600 dark:text-purple-400',
+      bg: 'bg-purple-50 dark:bg-purple-950/30',
+      trend: 'Stay focused!'
+    },
+    {
+      title: 'Tasks Done',
+      value: completedToday,
+      unit: `of ${todayTasks.length}`,
+      icon: CheckCircle,
+      color: 'text-orange-600 dark:text-orange-400',
+      bg: 'bg-orange-50 dark:bg-orange-950/30',
+      trend: 'Keep it up!'
+    }
+  ]
+
+  const achievements = [
+    { id: 1, title: 'Week Warrior', description: '7-day streak!', icon: Trophy, unlocked: true },
+    { id: 2, title: 'Problem Solver', description: '100+ problems', icon: Star, unlocked: true },
+    { id: 3, title: 'Focus Master', description: '50 Pomodoros', icon: Zap, unlocked: false },
+    { id: 4, title: 'Consistency King', description: '30-day streak', icon: Target, unlocked: false }
+  ]
+
+  const priorityColors = {
+    low: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200',
+    medium: 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200',
+    high: 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-200'
   }
 
-  const completedTasks = tasks.filter(task => task.completed).length
+  const handleStartFocusSession = () => {
+    // This would navigate to the productivity page and start a session
+    window.location.href = '/productivity'
+  }
+
+  const totalTasks = todayTasks.length
+  const completionRate = totalTasks > 0 ? (completedToday / totalTasks) * 100 : 0
+
+  // Mock data for demonstration
+  const mockData = {
+    weeklyGoal: 25,
+    completedThisWeek: 18,
+    streak: 12,
+    totalProblemsCompleted: 247,
+    averageTime: '15m',
+    strongestTopic: 'Dynamic Programming',
+    productivityScore: 85
+  }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 animate-fade-in">
       {/* Welcome Section */}
-      <div className="relative overflow-hidden glass-card p-8 animate-fade-in">
-        <div className="relative z-10">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-4xl font-bold gradient-text mb-2">
-                Welcome back! 👋
-              </h1>
-              <p className="text-lg subtitle-text">
-                Here's what's happening with your productivity today.
-              </p>
-            </div>
-            <div className="hidden md:block animate-float">
-              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary/20 to-purple-500/20 
-                              flex items-center justify-center">
-                <Zap className="w-10 h-10 text-primary" />
-              </div>
-            </div>
+      <div className="glass-card p-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl font-bold gradient-text mb-2">
+              Welcome back! 👋
+            </h1>
+            <p className="text-xl subtitle-text">
+              Ready to crush your goals today? Let's make it productive.
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button onClick={handleStartFocusSession} className="modern-button">
+              <Target className="w-4 h-4 mr-2" />
+              Start Focus Session
+            </Button>
           </div>
         </div>
-        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-primary/10 to-transparent 
-                        rounded-full -translate-y-32 translate-x-32" />
       </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard
-          title="LeetCode Progress"
-          value="45"
-          subtitle="Problems solved this month"
-          icon={<CheckCircle className="w-6 h-6 text-primary" />}
-          trend="+12% from last month"
-          progress={45}
-          delay={0}
-        />
-        <StatCard
-          title="GitHub Streak"
-          value="12 days"
-          subtitle="Current contribution streak"
-          icon={<Flame className="w-6 h-6 text-orange-500" />}
-          trend="+3 days this week"
-          progress={60}
-          delay={200}
-        />
-        <StatCard
-          title="Job Applications"
-          value="8"
-          subtitle="Applications sent this week"
-          icon={<Briefcase className="w-6 h-6 text-blue-500" />}
-          trend="+2 from last week"
-          progress={80}
-          delay={400}
-        />
-        <StatCard
-          title="Focus Time"
-          value="6.5 hrs"
-          subtitle="Deep work today"
-          icon={<Clock className="w-6 h-6 text-green-500" />}
-          trend="+1.2 hrs from yesterday"
-          progress={85}
-          delay={600}
-        />
+        {stats.map((stat, index) => {
+          const Icon = stat.icon
+          return (
+            <Card key={stat.title} className={`glass-card hover:scale-105 transition-all duration-300 animate-slide-up ${stat.bg}`} 
+                  style={{ animationDelay: `${index * 100}ms` }}>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <Icon className={`w-8 h-8 ${stat.color}`} />
+                  <TrendingUp className="w-4 h-4 text-slate-400" />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
+                    {stat.title}
+                  </p>
+                  <div className="flex items-baseline gap-2">
+                    <p className="text-3xl font-bold text-slate-900 dark:text-white">
+                      {stat.value}
+                    </p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                      {stat.unit}
+                    </p>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    {stat.trend}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )
+        })}
       </div>
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Tasks Section */}
-        <div className="lg:col-span-2">
-          <div className="glass-card p-6 animate-slide-up">
-            <CardHeader className="px-0 pt-0">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-xl font-bold gradient-text">Today's Tasks</CardTitle>
-                  <p className="subtitle-text mt-1">Stay focused and productive</p>
-                </div>
-                <button className="p-2 rounded-lg bg-primary/10 hover:bg-primary/20 
-                                 transition-colors duration-200">
-                  <Plus className="w-5 h-5 text-primary" />
-                </button>
-              </div>
-            </CardHeader>
-            <CardContent className="px-0 space-y-4">
-              {tasks.map((task) => (
-                <TaskItem
-                  key={task.id}
-                  task={task.task}
-                  completed={task.completed}
-                  priority={task.priority}
-                  onToggle={() => toggleTask(task.id)}
-                />
-              ))}
-            </CardContent>
-          </div>
-        </div>
-
-        {/* Progress Section */}
-        <div className="space-y-6">
-          {/* Daily Progress */}
-          <div className="glass-card p-6 animate-scale-in text-center">
-            <CardHeader className="px-0 pt-0">
-              <CardTitle className="text-lg font-bold gradient-text">Daily Progress</CardTitle>
-            </CardHeader>
-            <CardContent className="px-0">
-              <CircularProgress
-                value={completedTasks}
-                max={tasks.length}
-                label="Tasks Completed"
-              />
-            </CardContent>
-          </div>
-
-          {/* Quick Actions */}
-          <div className="glass-card p-6 animate-scale-in" style={{ animationDelay: '200ms' }}>
-            <CardHeader className="px-0 pt-0">
-              <CardTitle className="text-lg font-bold gradient-text">Quick Actions</CardTitle>
-            </CardHeader>
-            <CardContent className="px-0 space-y-3">
-              <button className="w-full modern-button">
-                <Target className="w-4 h-4 mr-2" />
-                Start Pomodoro
-              </button>
-              <button className="w-full px-4 py-2 rounded-lg border border-primary/20 
-                               text-primary hover:bg-primary/5 transition-colors duration-200">
-                <GitBranch className="w-4 h-4 mr-2" />
-                View Analytics
-              </button>
-            </CardContent>
-          </div>
-
-          {/* Achievement Badge */}
-          <div className="glass-card p-6 animate-scale-in" style={{ animationDelay: '400ms' }}>
-            <div className="text-center">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br 
-                              from-yellow-400 to-orange-500 flex items-center justify-center">
-                <Award className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="font-bold gradient-text mb-1">Streak Master!</h3>
-              <p className="text-sm subtitle-text">12-day coding streak achieved</p>
+        {/* Today's Productivity */}
+        <Card className="glass-card lg:col-span-2">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="gradient-text">Today's Focus</CardTitle>
+              <p className="subtitle-text mt-1">Your productivity at a glance</p>
             </div>
-          </div>
+            <Link to="/productivity">
+              <Button size="sm" className="modern-button">
+                View All
+                <ChevronRight className="w-4 h-4 ml-1" />
+              </Button>
+            </Link>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Quick Pomodoro Status */}
+            <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <Brain className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                  <span className="font-medium text-slate-700 dark:text-slate-200">
+                    Focus Sessions
+                  </span>
+                </div>
+                <Badge variant="outline" className="text-purple-600 dark:text-purple-400">
+                  {pomodoroSessionsToday} today
+                </Badge>
+              </div>
+              <Link to="/productivity">
+                <Button variant="outline" size="sm" className="w-full border-slate-300 dark:border-slate-600">
+                  <Clock className="w-4 h-4 mr-2" />
+                  Start Pomodoro Timer
+                </Button>
+              </Link>
+            </div>
+
+            {/* Today's Tasks Preview */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-semibold text-slate-700 dark:text-slate-200">
+                  Today's Tasks
+                </h4>
+                <Link to="/productivity">
+                  <Button variant="ghost" size="sm">
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </Link>
+              </div>
+              
+              {todayTasks.length === 0 ? (
+                <div className="text-center py-6">
+                  <Calendar className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">
+                    No tasks for today yet
+                  </p>
+                  <Link to="/productivity">
+                    <Button size="sm" className="modern-button">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add First Task
+                    </Button>
+                  </Link>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {todayTasks.map((task) => (
+                    <div
+                      key={task.id}
+                      className="flex items-center gap-3 p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700"
+                    >
+                      <div className={`w-2 h-2 rounded-full ${
+                        task.completed 
+                          ? 'bg-emerald-500' 
+                          : task.priority === 'high' 
+                            ? 'bg-red-500' 
+                            : task.priority === 'medium' 
+                              ? 'bg-amber-500' 
+                              : 'bg-emerald-500'
+                      }`} />
+                      <div className="flex-1 min-w-0">
+                        <span className={`text-sm ${
+                          task.completed 
+                            ? 'line-through text-slate-500 dark:text-slate-400' 
+                            : 'text-slate-900 dark:text-white'
+                        }`}>
+                          {task.title}
+                        </span>
+                      </div>
+                      <Badge variant="outline" className={`text-xs ${priorityColors[task.priority]}`}>
+                        {task.priority}
+                      </Badge>
+                    </div>
+                  ))}
+                  {todayTasks.length >= 3 && (
+                    <Link to="/productivity">
+                      <div className="text-center py-2">
+                        <Button variant="ghost" size="sm" className="text-xs">
+                          View all tasks
+                        </Button>
+                      </div>
+                    </Link>
+                  )}
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Recent Achievements */}
+        <Card className="glass-card">
+          <CardHeader>
+            <CardTitle className="gradient-text">Achievements</CardTitle>
+            <p className="subtitle-text">Your progress milestones</p>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {achievements.map((achievement) => {
+                const Icon = achievement.icon
+                return (
+                  <div
+                    key={achievement.id}
+                    className={`flex items-center gap-3 p-3 rounded-lg transition-all ${
+                      achievement.unlocked
+                        ? 'bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-700 border border-slate-200 dark:border-slate-600'
+                        : 'bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 opacity-60'
+                    }`}
+                  >
+                    <div className={`p-2 rounded-full ${
+                      achievement.unlocked
+                        ? 'bg-gradient-to-r from-yellow-400 to-orange-500'
+                        : 'bg-slate-300 dark:bg-slate-600'
+                    }`}>
+                      <Icon className={`w-4 h-4 ${
+                        achievement.unlocked ? 'text-white' : 'text-slate-500'
+                      }`} />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className={`font-medium text-sm ${
+                        achievement.unlocked 
+                          ? 'text-slate-900 dark:text-white' 
+                          : 'text-slate-500 dark:text-slate-400'
+                      }`}>
+                        {achievement.title}
+                      </h4>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        {achievement.description}
+                      </p>
+                    </div>
+                    {achievement.unlocked && (
+                      <Badge variant="outline" className="text-xs bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
+                        Unlocked
+                      </Badge>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Spotify Mini Player */}
+      <div className="space-y-6">
+        <div>
+          <h3 className="text-lg font-semibold gradient-text mb-4">Now Playing</h3>
+          <SpotifyMiniPlayer />
         </div>
+
+        {/* Quick Actions */}
+        <Card className="glass-card">
+          <CardHeader>
+            <CardTitle className="gradient-text">Quick Actions</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-3">
+              <Link to="/leetcode">
+                <Button variant="outline" className="w-full h-16 flex flex-col items-center gap-1 border-slate-300 dark:border-slate-600">
+                  <BookOpen className="w-5 h-5" />
+                  <span className="text-xs">LeetCode</span>
+                </Button>
+              </Link>
+              <Link to="/productivity">
+                <Button variant="outline" className="w-full h-16 flex flex-col items-center gap-1 border-slate-300 dark:border-slate-600">
+                  <Target className="w-5 h-5" />
+                  <span className="text-xs">Productivity</span>
+                </Button>
+              </Link>
+              <Link to="/integrations">
+                <Button variant="outline" className="w-full h-16 flex flex-col items-center gap-1 border-slate-300 dark:border-slate-600">
+                  <Zap className="w-5 h-5" />
+                  <span className="text-xs">Integrations</span>
+                </Button>
+              </Link>
+              <Link to="/analytics">
+                <Button variant="outline" className="w-full h-16 flex flex-col items-center gap-1 border-slate-300 dark:border-slate-600">
+                  <TrendingUp className="w-5 h-5" />
+                  <span className="text-xs">Analytics</span>
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Secondary Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* LeetCode Progress */}
+        <Card className="glass-card">
+          <CardHeader>
+            <CardTitle className="gradient-text">LeetCode Progress</CardTitle>
+            <p className="subtitle-text">Weekly coding practice</p>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium text-slate-600 dark:text-slate-300">
+                  Weekly Goal
+                </span>
+                <span className="text-sm text-slate-500 dark:text-slate-400">
+                  {mockData.completedThisWeek} / {mockData.weeklyGoal}
+                </span>
+              </div>
+              <Progress value={(mockData.completedThisWeek / mockData.weeklyGoal) * 100} className="h-2" />
+              
+              <div className="grid grid-cols-3 gap-4 pt-4">
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                    {mockData.totalProblemsCompleted}
+                  </p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Total Solved</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                    {mockData.averageTime}
+                  </p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Avg Time</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                    {mockData.streak}
+                  </p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Day Streak</p>
+                </div>
+              </div>
+              
+              <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-slate-600 dark:text-slate-300">
+                    Strongest: {mockData.strongestTopic}
+                  </span>
+                  <Link to="/leetcode">
+                    <Button size="sm" variant="outline" className="border-slate-300 dark:border-slate-600">
+                      <BookOpen className="w-4 h-4 mr-2" />
+                      Practice
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* GitHub Activity */}
+        <Card className="glass-card">
+          <CardHeader>
+            <CardTitle className="gradient-text">GitHub Activity</CardTitle>
+            <p className="subtitle-text">Your development journey</p>
+          </CardHeader>
+          <CardContent>
+            {githubData ? (
+              <div className="space-y-4">
+                {githubData.user && (
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={githubData.user.avatar}
+                      alt={githubData.user.name}
+                      className="w-10 h-10 rounded-full"
+                    />
+                    <div>
+                      <p className="font-medium text-slate-900 dark:text-white">
+                        {githubData.user.name}
+                      </p>
+                      <p className="text-sm text-slate-600 dark:text-slate-300">
+                        @{githubData.user.username}
+                      </p>
+                    </div>
+                  </div>
+                )}
+                
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                      {githubData.user?.publicRepos || 0}
+                    </p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Repositories</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                      {githubData.contributions?.currentStreak || 0}
+                    </p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Day Streak</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                      {githubData.contributions?.totalCommits || 0}
+                    </p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Commits</p>
+                  </div>
+                </div>
+                
+                <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
+                  <Link to="/integrations">
+                    <Button size="sm" variant="outline" className="w-full border-slate-300 dark:border-slate-600">
+                      <Github className="w-4 h-4 mr-2" />
+                      View Full Dashboard
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <Github className="w-16 h-16 text-slate-400 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-slate-700 dark:text-slate-200 mb-2">
+                  Connect GitHub
+                </h3>
+                <p className="text-slate-500 dark:text-slate-400 mb-4">
+                  Track your coding activity and contributions
+                </p>
+                <Link to="/integrations">
+                  <Button className="modern-button">
+                    <Github className="w-4 h-4 mr-2" />
+                    Connect GitHub
+                  </Button>
+                </Link>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   )
