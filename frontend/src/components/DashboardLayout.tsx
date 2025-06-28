@@ -1,280 +1,207 @@
-import { useState } from 'react'
-import { Button } from './ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
-import { 
-  Sidebar, 
-  SidebarContent, 
-  SidebarGroup, 
-  SidebarGroupContent, 
-  SidebarMenu, 
-  SidebarMenuButton, 
+import React, { useState, useEffect } from 'react'
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarHeader,
+  SidebarMenu,
   SidebarMenuItem,
+  SidebarMenuButton,
   SidebarProvider,
-  SidebarTrigger
 } from './ui/sidebar'
 import { 
-  Code2, 
-  CheckSquare, 
-  Timer, 
-  Github, 
-  Music, 
-  Briefcase,
-  BarChart3,
-  Home
+  BarChart3, 
+  BookOpen, 
+  BriefcaseIcon, 
+  Home, 
+  Moon, 
+  Sun, 
+  User, 
+  ChevronLeft, 
+  ChevronRight,
+  Sparkles 
 } from 'lucide-react'
-import { LeetCodeSection } from './LeetCodeSection'
+import { Link, useLocation } from 'react-router-dom'
 
-export function DashboardLayout() {
-  const [activeSection, setActiveSection] = useState('overview')
-
-  const menuItems = [
-    { id: 'overview', label: 'Overview', icon: Home },
-    { id: 'leetcode', label: 'LeetCode', icon: Code2 },
-    { id: 'pomodoro', label: 'Pomodoro', icon: Timer },
-    { id: 'todos', label: 'Todo Lists', icon: CheckSquare },
-    { id: 'github', label: 'GitHub', icon: Github },
-    { id: 'jobs', label: 'Job Search', icon: Briefcase },
-    { id: 'analytics', label: 'Analytics', icon: BarChart3 },
-    { id: 'spotify', label: 'Music', icon: Music },
-  ]
-
-  const renderContent = () => {
-    switch (activeSection) {
-      case 'overview':
-        return <OverviewSection />
-      case 'leetcode':
-        return <LeetCodeSection />
-      case 'pomodoro':
-        return <PomodoroSection />
-      case 'todos':
-        return <TodoSection />
-      case 'github':
-        return <GitHubSection />
-      case 'jobs':
-        return <JobsSection />
-      case 'analytics':
-        return <AnalyticsSection />
-      case 'spotify':
-        return <SpotifySection />
-      default:
-        return <OverviewSection />
-    }
+// Enhanced Dark mode toggle with smooth transitions
+function DarkModeToggle() {
+  const [dark, setDark] = useState(() =>
+    typeof window !== 'undefined' ? document.documentElement.classList.contains('dark') : false
+  )
+  
+  const toggle = () => {
+    setDark((d) => {
+      if (typeof window !== 'undefined') {
+        if (document.documentElement.classList.contains('dark')) {
+          document.documentElement.classList.remove('dark')
+        } else {
+          document.documentElement.classList.add('dark')
+        }
+      }
+      return !d
+    })
   }
 
   return (
-    <SidebarProvider>
-      <div className="flex h-screen">
-        <Sidebar className="w-64">
-          <SidebarContent>
-            <div className="p-4 border-b">
-              <h2 className="text-lg font-semibold">CS Productivity Hub</h2>
-            </div>
-            <SidebarGroup>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {menuItems.map((item) => (
-                    <SidebarMenuItem key={item.id}>
-                      <SidebarMenuButton
-                        onClick={() => setActiveSection(item.id)}
-                        isActive={activeSection === item.id}
-                        className="w-full justify-start"
-                      >
-                        <item.icon className="mr-2 h-4 w-4" />
-                        {item.label}
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </SidebarContent>
-        </Sidebar>
-
-        <div className="flex-1 flex flex-col">
-          {/* Header */}
-          <header className="border-b p-4 flex items-center justify-between bg-background">
-            <div className="flex items-center gap-2">
-              <SidebarTrigger />
-              <h1 className="text-xl font-semibold">
-                {menuItems.find(item => item.id === activeSection)?.label || 'Dashboard'}
-              </h1>
-            </div>
-            <div className="flex items-center gap-4">
-              <Button variant="outline" size="sm">Settings</Button>
-              <Avatar>
-                <AvatarImage src="/avatar.jpg" />
-                <AvatarFallback>CS</AvatarFallback>
-              </Avatar>
-            </div>
-          </header>
-
-          {/* Main Content */}
-          <main className="flex-1 p-6 overflow-auto bg-gray-50">
-            {renderContent()}
-          </main>
-        </div>
+    <button
+      aria-label="Toggle dark mode"
+      className="relative p-2 rounded-xl bg-gradient-to-r from-slate-100 to-slate-200 
+                 dark:from-slate-800 dark:to-slate-700 hover:scale-105 
+                 transition-all duration-300 ease-out group overflow-hidden"
+      onClick={toggle}
+    >
+      <div className="relative z-10">
+        {dark ? (
+          <Sun className="w-4 h-4 text-yellow-500 group-hover:rotate-12 transition-transform duration-300" />
+        ) : (
+          <Moon className="w-4 h-4 text-slate-600 group-hover:-rotate-12 transition-transform duration-300" />
+        )}
       </div>
-    </SidebarProvider>
+      <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/20 to-orange-400/20 
+                      opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+    </button>
   )
 }
 
-// Placeholder sections for each dashboard area
-function OverviewSection() {
+// Modern Avatar Component
+function UserAvatar() {
   return (
-    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-      <Card>
-        <CardHeader>
-          <CardTitle>LeetCode Progress</CardTitle>
-          <CardDescription>Recent problem solving activity</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-2xl font-bold">45 / 100</p>
-          <p className="text-sm text-muted-foreground">Problems completed this month</p>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>GitHub Activity</CardTitle>
-          <CardDescription>Contribution streak</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-2xl font-bold">12 days</p>
-          <p className="text-sm text-muted-foreground">Current streak</p>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Job Applications</CardTitle>
-          <CardDescription>This week's applications</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-2xl font-bold">8</p>
-          <p className="text-sm text-muted-foreground">Applications sent</p>
-        </CardContent>
-      </Card>
-
-      <Card className="md:col-span-2">
-        <CardHeader>
-          <CardTitle>Today's Tasks</CardTitle>
-          <CardDescription>Focus on what matters</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <CheckSquare className="h-4 w-4" />
-              <span>Complete 3 LeetCode problems</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckSquare className="h-4 w-4" />
-              <span>Apply to 2 new job postings</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckSquare className="h-4 w-4" />
-              <span>Review GitHub repositories</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Pomodoro Sessions</CardTitle>
-          <CardDescription>Today's focus time</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-2xl font-bold">6</p>
-          <p className="text-sm text-muted-foreground">Sessions completed</p>
-        </CardContent>
-      </Card>
+    <div className="relative group">
+      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary via-purple-500 to-pink-500 
+                      p-0.5 group-hover:scale-105 transition-transform duration-300">
+        <div className="w-full h-full rounded-full bg-white dark:bg-slate-900 flex items-center justify-center">
+          <User className="w-5 h-5 text-slate-600 dark:text-slate-300" />
+        </div>
+      </div>
+      <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 
+                      border-white dark:border-slate-900 animate-pulse" />
     </div>
   )
 }
 
+// Navigation Item Component
+interface NavItemProps {
+  to: string
+  icon: React.ComponentType<{ className?: string }>
+  label: string
+  collapsed: boolean
+  isActive: boolean
+}
 
-
-function PomodoroSection() {
+function NavItem({ to, icon: Icon, label, collapsed, isActive }: NavItemProps) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Pomodoro Timer</CardTitle>
-        <CardDescription>Focus sessions with break reminders</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <p>Pomodoro timer will go here...</p>
-      </CardContent>
-    </Card>
+    <Link to={to} className="block">
+      <div className={`modern-nav-item ${isActive ? 'active' : ''}`}>
+        <Icon className="w-5 h-5 animated-icon" />
+        <span className={`transition-all duration-300 ${
+          collapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100 w-auto'
+        }`}>
+          {label}
+        </span>
+        {isActive && !collapsed && (
+          <div className="ml-auto">
+            <Sparkles className="w-4 h-4 text-primary animate-pulse" />
+          </div>
+        )}
+      </div>
+    </Link>
   )
 }
 
-function TodoSection() {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Weekly Todo Lists</CardTitle>
-        <CardDescription>Organize tasks by day of the week</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <p>Todo lists will go here...</p>
-      </CardContent>
-    </Card>
-  )
-}
+export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [collapsed, setCollapsed] = useState(false)
+  const [mounted, setMounted] = useState(false)
+  const location = useLocation()
+  
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
-function GitHubSection() {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>GitHub Integration</CardTitle>
-        <CardDescription>Contribution charts and repository activity</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <p>GitHub integration will go here...</p>
-      </CardContent>
-    </Card>
-  )
-}
+  if (!mounted) return null
 
-function JobsSection() {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Job Search</CardTitle>
-        <CardDescription>Track new postings and applications</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <p>Job search interface will go here...</p>
-      </CardContent>
-    </Card>
-  )
-}
+  const sidebarWidth = collapsed ? 80 : 280
+  
+  const navItems = [
+    { to: '/', icon: Home, label: 'Overview' },
+    { to: '/leetcode', icon: BookOpen, label: 'LeetCode' },
+    { to: '/analytics', icon: BarChart3, label: 'Analytics' },
+    { to: '/jobs', icon: BriefcaseIcon, label: 'Jobs' },
+  ]
 
-function AnalyticsSection() {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Analytics Dashboard</CardTitle>
-        <CardDescription>Progress tracking and insights</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <p>Analytics charts will go here...</p>
-      </CardContent>
-    </Card>
-  )
-}
-
-function SpotifySection() {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Spotify Integration</CardTitle>
-        <CardDescription>Control your music while working</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <p>Spotify player will go here...</p>
-      </CardContent>
-    </Card>
+    <SidebarProvider>
+      <div className="min-h-screen w-full modern-background relative overflow-hidden">
+        {/* Floating background pattern */}
+        <div className="fixed inset-0 floating-pattern pointer-events-none" />
+        
+        <div className="relative min-h-screen">
+          {/* Enhanced sidebar with glassmorphism */}
+          <Sidebar 
+            className={`fixed top-0 left-0 h-full z-30 sidebar-glass transition-all duration-500 ease-out ${
+              collapsed ? 'w-20' : 'w-70'
+            }`}
+            style={{ width: sidebarWidth }}
+          > 
+            <SidebarHeader className="flex items-center gap-3 px-6 py-6 border-b border-white/10 dark:border-slate-700/30">
+              <UserAvatar />
+              <div className={`transition-all duration-300 overflow-hidden ${
+                collapsed ? 'opacity-0 w-0' : 'opacity-100 w-auto'
+              }`}>
+                <h1 className="text-xl font-bold gradient-text leading-none">
+                  Productivity Hub
+                </h1>
+                <p className="text-sm subtitle-text">CS Dashboard</p>
+              </div>
+              <div className="ml-auto">
+                <DarkModeToggle />
+              </div>
+            </SidebarHeader>
+            
+            <SidebarContent className="px-4 py-6">
+              <SidebarMenu className="space-y-2">
+                {navItems.map((item) => (
+                  <SidebarMenuItem key={item.to}>
+                    <NavItem
+                      to={item.to}
+                      icon={item.icon}
+                      label={item.label}
+                      collapsed={collapsed}
+                      isActive={location.pathname === item.to}
+                    />
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarContent>
+            
+            {/* Enhanced collapse button */}
+            <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2">
+              <button
+                aria-label="Toggle sidebar"
+                className="p-3 rounded-full bg-white/20 dark:bg-slate-800/20 backdrop-blur-sm
+                           hover:bg-white/30 dark:hover:bg-slate-700/30 
+                           border border-white/20 dark:border-slate-600/20
+                           transition-all duration-300 hover:scale-110 group"
+                onClick={() => setCollapsed((c) => !c)}
+              >
+                {collapsed ? (
+                  <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform duration-200" />
+                ) : (
+                  <ChevronLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform duration-200" />
+                )}
+              </button>
+            </div>
+          </Sidebar>
+          
+          {/* Enhanced main content area */}
+          <main 
+            className="flex-1 p-8 transition-all duration-500 ease-out animate-fade-in"
+            style={{ marginLeft: sidebarWidth }}
+          >
+            <div className="max-w-7xl mx-auto space-y-8"> 
+              {children}
+            </div>
+          </main>
+        </div>
+      </div>
+    </SidebarProvider>
   )
 } 

@@ -83,6 +83,7 @@ const LeetCodeProblemSchema = new Schema<ILeetCodeProblem>({
   toJSON: {
     virtuals: true,
     transform: function(doc, ret) {
+      ret._id = ret._id.toString()
       delete ret.__v
       return ret
     }
@@ -92,8 +93,9 @@ const LeetCodeProblemSchema = new Schema<ILeetCodeProblem>({
 // Indexes for better query performance
 LeetCodeProblemSchema.index({ difficulty: 1 })
 LeetCodeProblemSchema.index({ topic: 1 })
-LeetCodeProblemSchema.index({ dateCompleted: -1 })
 LeetCodeProblemSchema.index({ problemNumber: 1 }, { unique: true })
+LeetCodeProblemSchema.index({ dateCompleted: -1 })
+LeetCodeProblemSchema.index({ needsReview: 1 })
 
 // Virtual for calculating average time per attempt
 LeetCodeProblemSchema.virtual('timePerAttempt').get(function() {

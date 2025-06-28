@@ -2,12 +2,19 @@ import * as React from "react"
 
 import { cn } from "../../lib/utils"
 
-function Card({ className, ...props }: React.ComponentProps<"div">) {
+interface CardProps extends React.ComponentProps<"div"> {
+  floating?: boolean;
+  gradient?: boolean;
+}
+
+function Card({ className, floating = true, gradient = false, ...props }: CardProps) {
   return (
     <div
       data-slot="card"
       className={cn(
-        "bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm",
+        "bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm transition-all duration-300",
+        floating && "hover:-translate-y-1 hover:shadow-2xl hover:scale-[1.025]",
+        gradient && "border-2 border-transparent bg-gradient-to-br from-white/80 via-blue-100/60 to-pink-100/60 dark:from-gray-900/80 dark:via-fuchsia-900/60 dark:to-pink-900/60",
         className
       )}
       {...props}

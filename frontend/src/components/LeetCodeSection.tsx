@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Button } from './ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs'
@@ -49,18 +49,7 @@ export function LeetCodeSection() {
   const [activeTab, setActiveTab] = useState('problems')
 
   // Load problems when component mounts or filters change
-  useEffect(() => {
-    loadProblems()
-  }, [filters])
-
-  // Load analytics when tab changes to analytics
-  useEffect(() => {
-    if (activeTab === 'analytics' && !analytics) {
-      loadAnalytics()
-    }
-  }, [activeTab])
-
-  const loadProblems = async () => {
+  const loadProblems = useCallback(async () => {
     try {
       setIsLoading(true)
       const response: LeetCodeResponse = await leetcodeApi.getProblems(filters)
@@ -72,19 +61,30 @@ export function LeetCodeSection() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [filters])
 
-  const loadAnalytics = async () => {
-    try {
-      setIsAnalyticsLoading(true)
-      const analyticsData = await leetcodeApi.getAnalytics()
-      setAnalytics(analyticsData)
-    } catch (error) {
-      console.error('Failed to load analytics:', error)
-    } finally {
-      setIsAnalyticsLoading(false)
+  // Load analytics when tab changes to analytics
+  const calculateAnalytics = useCallback(() => {
+    if (problems.length > 0) {
+      const newAnalytics: AnalyticsData = {
+        easy: problems.filter(p => p.difficulty === 'Easy').length,
+        medium: problems.filter(p => p.difficulty === 'Medium').length,
+        hard: problems.filter(p => p.difficulty === 'Hard').length,
+        totalSolved: problems.length,
+        averageTime: problems.reduce((sum, p) => sum + p.timeSpent, 0) / problems.length,
+        successRate: problems.reduce((sum, p) => sum + p.successRate, 0) / problems.length,
+      }
+      setAnalytics(newAnalytics)
     }
-  }
+  }, [problems])
+
+  useEffect(() => {
+    loadProblems()
+  }, [loadProblems])
+
+  useEffect(() => {
+    calculateAnalytics()
+  }, [calculateAnalytics])
 
   const handleCreateProblem = async (formData: LeetCodeFormData) => {
     try {
@@ -94,7 +94,7 @@ export function LeetCodeSection() {
       await loadProblems()
       // Refresh analytics if it's loaded
       if (analytics) {
-        await loadAnalytics()
+        await calculateAnalytics()
       }
     } catch (error: any) {
       console.error('Failed to create problem:', error)
@@ -118,7 +118,7 @@ export function LeetCodeSection() {
       await loadProblems()
       // Refresh analytics if it's loaded
       if (analytics) {
-        await loadAnalytics()
+        await calculateAnalytics()
       }
     } catch (error) {
       console.error('Failed to update problem:', error)
@@ -156,7 +156,7 @@ export function LeetCodeSection() {
       await loadProblems()
       // Refresh analytics if it's loaded
       if (analytics) {
-        await loadAnalytics()
+        await calculateAnalytics()
       }
     } catch (error) {
       console.error('Failed to delete problem:', error)
@@ -256,7 +256,7 @@ export function LeetCodeSection() {
         <TabsContent value="analytics" className="space-y-4">
           {analytics ? (
             <LeetCodeAnalytics 
-              analytics={analytics} 
+              data={analytics} 
               isLoading={isAnalyticsLoading}
             />
           ) : (

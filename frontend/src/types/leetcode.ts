@@ -1,35 +1,34 @@
 export interface LeetCodeProblem {
-  _id: string
-  problemName: string
-  problemNumber: number
-  difficulty: 'Easy' | 'Medium' | 'Hard'
-  topic: string[]
-  timeSpent: number
-  dateCompleted: string
-  attempts: number
-  successRate: number
-  notes?: string
-  url?: string
-  personalRating?: number
-  needsReview: boolean
-  createdAt: string
-  updatedAt: string
-  timePerAttempt?: number
+  _id: string;
+  problemName: string;
+  problemNumber: number;
+  difficulty: 'Easy' | 'Medium' | 'Hard';
+  timeSpent: number;
+  topic: string[];
+  dateCompleted: string;
+  attempts: number;
+  successRate: number;
+  notes?: string;
+  url?: string;
+  personalRating?: number;
+  needsReview: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface LeetCodeFormData {
-  problemName: string
-  problemNumber: number
-  difficulty: 'Easy' | 'Medium' | 'Hard'
-  topic: string[]
-  timeSpent: number
-  dateCompleted: string
-  attempts: number
-  successRate: number
-  notes?: string
-  url?: string
-  personalRating?: number
-  needsReview: boolean
+  problemName: string;
+  problemNumber: number;
+  difficulty: 'Easy' | 'Medium' | 'Hard';
+  timeSpent: number;
+  topic: string[];
+  dateCompleted: string;
+  attempts: number;
+  successRate: number;
+  notes?: string;
+  url?: string;
+  personalRating?: number;
+  needsReview: boolean;
 }
 
 export interface LeetCodeFilters {
@@ -55,32 +54,14 @@ export interface LeetCodeResponse {
 }
 
 export interface AnalyticsData {
-  totalProblems: number
-  difficultyStats: {
-    _id: string
-    count: number
-    avgTime: number
-  }[]
-  topicStats: {
-    _id: string
-    count: number
-    avgTime: number
-  }[]
-  monthlyProgress: {
-    _id: { year: number; month: number }
-    count: number
-    totalTime: number
-    avgSuccessRate: number
-  }[]
-  recentActivity: {
-    _id: string
-    count: number
-    totalTime: number
-  }[]
-  overallStats: {
-    totalTime: number
-    avgTime: number
-    avgSuccessRate: number
-    totalAttempts: number
-  }
+  easy: number;
+  medium: number;
+  hard: number;
+  totalSolved: number;
+  averageTime: number;
+  successRate: number;
+  monthlyProgress?: {
+    month: string;
+    problems: number;
+  }[];
 } 
