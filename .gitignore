@@ -50,3 +50,4 @@ data/
 # Temporary folders
 tmp/
 temp/ 
+backend/.env.backup

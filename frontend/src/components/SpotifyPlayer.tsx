@@ -199,16 +199,55 @@ export const SpotifyPlayer: React.FC = () => {
   const handleAuth = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`${API_BASE}/api/spotify/auth`)
-      const data = await response.json()
+      setError(null) // Clear any previous errors
       
-      if (data.authURL) {
-        window.location.href = data.authURL
-      } else {
-        setError('Failed to initiate Spotify authentication')
+      console.log('Making request to:', `${API_BASE}/api/spotify/auth`)
+      
+      const response = await fetch(`${API_BASE}/api/spotify/auth`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include'
+      })
+      
+      console.log('Response status:', response.status)
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()))
+      
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('Error response text:', errorText)
+        try {
+          const errorData = JSON.parse(errorText)
+          throw new Error(errorData.error || 'Failed to initiate Spotify authentication')
+        } catch {
+          throw new Error(`HTTP ${response.status}: ${errorText || 'Unknown error'}`)
+        }
       }
-    } catch (error) {
-      setError('Authentication failed')
+      
+      const responseText = await response.text()
+      console.log('Response text:', responseText)
+      
+      let data
+      try {
+        data = JSON.parse(responseText)
+      } catch (parseError) {
+        console.error('JSON parse error:', parseError)
+        throw new Error('Invalid JSON response from server')
+      }
+      
+      console.log('Parsed data:', data)
+      
+      if (!data.authURL) {
+        throw new Error('No authorization URL received')
+      }
+
+      console.log('Redirecting to Spotify auth:', data.authURL)
+      window.location.href = data.authURL
+    } catch (error: any) {
+      console.error('Spotify auth error details:', error)
+      setError(error.message || 'Authentication failed')
     } finally {
       setLoading(false)
     }

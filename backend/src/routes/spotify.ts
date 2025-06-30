@@ -1,12 +1,24 @@
 import express from 'express'
 import axios from 'axios'
 import querystring from 'querystring'
+import path from 'path'
+import dotenv from 'dotenv'
+
+// Load environment variables from the backend root directory
+dotenv.config({ path: path.resolve(__dirname, '../../.env') })
 
 const router = express.Router()
 
 // Spotify credentials
 const CLIENT_ID = process.env.SPOTIFY_CLIENT_ID
 const CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET
+
+// Debug log
+console.log('Spotify Config:', {
+  clientId: CLIENT_ID?.slice(0, 5) + '...',
+  hasSecret: !!CLIENT_SECRET,
+  redirectUri: process.env.SPOTIFY_REDIRECT_URI
+})
 const REDIRECT_URI = process.env.SPOTIFY_REDIRECT_URI || 'http://127.0.0.1:3002/api/spotify/callback'
 
 // In-memory token storage (in production, use a database)
@@ -74,15 +86,23 @@ router.get('/auth', (req, res) => {
   const scope = 'streaming user-read-private user-read-email user-read-currently-playing user-read-playback-state user-modify-playback-state user-read-recently-played playlist-read-private playlist-read-collaborative'
   const state = Math.random().toString(36).substring(2, 15)
   
+  console.log('Starting Spotify auth with:', {
+    clientIdExists: !!CLIENT_ID,
+    redirectUri: REDIRECT_URI,
+    scope
+  })
+
   const authURL = 'https://accounts.spotify.com/authorize?' +
     querystring.stringify({
       response_type: 'code',
       client_id: CLIENT_ID,
       scope: scope,
       redirect_uri: REDIRECT_URI,
-      state: state
+      state: state,
+      show_dialog: true // Force showing the auth dialog
     })
 
+  console.log('Generated Spotify auth URL:', authURL)
   res.json({ authURL })
 })
 
