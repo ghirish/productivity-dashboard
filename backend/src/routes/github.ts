@@ -1,7 +1,59 @@
 import express from 'express'
 import axios from 'axios'
+import type { AxiosResponse } from 'axios'
 
 const router = express.Router()
+
+// GitHub API Interfaces
+interface GitHubUser {
+  login: string
+  name: string
+  avatar_url: string
+  bio: string
+  location: string
+  public_repos: number
+  followers: number
+  following: number
+  created_at: string
+}
+
+interface GitHubCommit {
+  commit: {
+    committer: {
+      date: string
+    }
+  }
+}
+
+interface GitHubSearchResponse {
+  items: GitHubCommit[]
+}
+
+interface GitHubRepo {
+  id: number
+  name: string
+  full_name: string
+  description: string | null
+  language: string | null
+  stargazers_count: number
+  forks_count: number
+  private: boolean
+  updated_at: string
+  html_url: string
+  topics: string[]
+}
+
+interface GitHubEvent {
+  type: string
+  repo: {
+    name: string
+  }
+  created_at: string
+  payload: {
+    commits?: { id: string }[]
+    ref_type?: string
+  }
+}
 
 // Helper function to get GitHub API headers
 const getGitHubHeaders = () => ({
@@ -17,7 +69,7 @@ router.get('/user', async (req, res) => {
       return res.status(401).json({ error: 'GitHub token not configured' })
     }
 
-    const response = await axios.get('https://api.github.com/user', {
+    const response: AxiosResponse<GitHubUser> = await axios.get('https://api.github.com/user', {
       headers: getGitHubHeaders()
     })
 
@@ -52,8 +104,7 @@ router.get('/contributions', async (req, res) => {
     const now = new Date()
     const oneYearAgo = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate())
     
-    // Get commits from the last year
-    const response = await axios.get(`https://api.github.com/search/commits`, {
+    const response: AxiosResponse<GitHubSearchResponse> = await axios.get(`https://api.github.com/search/commits`, {
       headers: {
         ...getGitHubHeaders(),
         'Accept': 'application/vnd.github.cloak-preview+json'
@@ -70,7 +121,7 @@ router.get('/contributions', async (req, res) => {
     const commitsByDate: { [key: string]: number } = {}
     const commits = response.data.items || []
 
-    commits.forEach((commit: any) => {
+    commits.forEach((commit: GitHubCommit) => {
       const date = commit.commit.committer.date.split('T')[0]
       commitsByDate[date] = (commitsByDate[date] || 0) + 1
     })
@@ -142,7 +193,7 @@ router.get('/repos', async (req, res) => {
       return res.status(401).json({ error: 'GitHub token not configured' })
     }
 
-    const response = await axios.get('https://api.github.com/user/repos', {
+    const response: AxiosResponse<GitHubRepo[]> = await axios.get('https://api.github.com/user/repos', {
       headers: getGitHubHeaders(),
       params: {
         sort: 'updated',
@@ -151,7 +202,7 @@ router.get('/repos', async (req, res) => {
       }
     })
 
-    const repos = response.data.map((repo: any) => ({
+    const repos = response.data.map((repo: GitHubRepo) => ({
       id: repo.id,
       name: repo.name,
       fullName: repo.full_name,
@@ -182,18 +233,15 @@ router.get('/stats', async (req, res) => {
       return res.status(401).json({ error: 'GitHub token not configured' })
     }
 
-    // Get user data
-    const userResponse = await axios.get('https://api.github.com/user', {
+    const userResponse: AxiosResponse<GitHubUser> = await axios.get('https://api.github.com/user', {
       headers: getGitHubHeaders()
     })
 
-    // Get repository languages
-    const reposResponse = await axios.get('https://api.github.com/user/repos', {
+    const reposResponse: AxiosResponse<GitHubRepo[]> = await axios.get('https://api.github.com/user/repos', {
       headers: getGitHubHeaders(),
       params: { per_page: 100 }
     })
 
-    // Calculate language statistics
     const languageStats: { [key: string]: number } = {}
     const repos = reposResponse.data
 
@@ -203,13 +251,15 @@ router.get('/stats', async (req, res) => {
       }
     }
 
-    // Get recent activity
-    const eventsResponse = await axios.get(`https://api.github.com/users/${userResponse.data.login}/events/public`, {
-      headers: getGitHubHeaders(),
-      params: { per_page: 10 }
-    })
+    const eventsResponse: AxiosResponse<GitHubEvent[]> = await axios.get(
+      `https://api.github.com/users/${userResponse.data.login}/events/public`,
+      {
+        headers: getGitHubHeaders(),
+        params: { per_page: 10 }
+      }
+    )
 
-    const recentActivity = eventsResponse.data.map((event: any) => ({
+    const recentActivity = eventsResponse.data.map((event: GitHubEvent) => ({
       type: event.type,
       repo: event.repo.name,
       createdAt: event.created_at,
@@ -218,8 +268,8 @@ router.get('/stats', async (req, res) => {
 
     res.json({
       totalRepos: userResponse.data.public_repos,
-      totalStars: repos.reduce((sum: number, repo: any) => sum + repo.stargazers_count, 0),
-      totalForks: repos.reduce((sum: number, repo: any) => sum + repo.forks_count, 0),
+      totalStars: repos.reduce((sum: number, repo: GitHubRepo) => sum + repo.stargazers_count, 0),
+      totalForks: repos.reduce((sum: number, repo: GitHubRepo) => sum + repo.forks_count, 0),
       languageStats,
       recentActivity,
       followers: userResponse.data.followers,
@@ -235,7 +285,7 @@ router.get('/stats', async (req, res) => {
 })
 
 // Helper function to get human-readable event actions
-function getEventAction(event: any): string {
+function getEventAction(event: GitHubEvent): string {
   switch (event.type) {
     case 'PushEvent':
       return `Pushed ${event.payload.commits?.length || 1} commit(s)`
@@ -248,11 +298,9 @@ function getEventAction(event: any): string {
     case 'IssueCommentEvent':
       return 'Commented on issue'
     case 'PullRequestEvent':
-      return `${event.payload.action} pull request`
-    case 'IssuesEvent':
-      return `${event.payload.action} issue`
+      return 'Updated pull request'
     default:
-      return event.type.replace('Event', '')
+      return 'Performed action'
   }
 }
 

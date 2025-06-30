@@ -35,7 +35,7 @@ export const SpotifyMiniPlayer: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [loading, setLoading] = useState(true)
 
-  const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000'
+  const API_BASE = process.env.REACT_APP_API_URL || 'http://127.0.0.1:3002'
 
   // Check authentication status
   const checkAuthStatus = useCallback(async () => {

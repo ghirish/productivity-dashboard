@@ -86,7 +86,7 @@ export const Overview: React.FC = () => {
   useEffect(() => {
     const fetchGitHubPreview = async () => {
       try {
-        const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000'
+        const API_BASE = process.env.REACT_APP_API_URL || 'http://127.0.0.1:3002'
         const [userRes, contributionsRes] = await Promise.allSettled([
           fetch(`${API_BASE}/api/github/user`),
           fetch(`${API_BASE}/api/github/contributions`)

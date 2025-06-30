@@ -91,7 +91,7 @@ export const SpotifyPlayer: React.FC = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000'
+  const API_BASE = process.env.REACT_APP_API_URL || 'http://127.0.0.1:3002'
 
   // Check authentication status
   const checkAuthStatus = useCallback(async () => {

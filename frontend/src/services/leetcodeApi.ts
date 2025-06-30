@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { LeetCodeProblem, LeetCodeFormData, LeetCodeFilters, LeetCodeResponse, AnalyticsData } from '../types/leetcode'
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000'
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:3002'
 
 const api = axios.create({
   baseURL: `${API_BASE_URL}/api/leetcode`,

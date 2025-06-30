@@ -7,7 +7,7 @@ const router = express.Router()
 // Spotify credentials
 const CLIENT_ID = process.env.SPOTIFY_CLIENT_ID
 const CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET
-const REDIRECT_URI = process.env.SPOTIFY_REDIRECT_URI || 'http://localhost:3000/api/auth/callback/spotify'
+const REDIRECT_URI = process.env.SPOTIFY_REDIRECT_URI || 'http://127.0.0.1:3002/api/spotify/callback'
 
 // In-memory token storage (in production, use a database)
 let accessToken: string | null = null
@@ -66,11 +66,12 @@ const ensureValidToken = async (): Promise<boolean> => {
 
 // GET /api/spotify/auth - Start Spotify authentication
 router.get('/auth', (req, res) => {
-  if (!CLIENT_ID) {
-    return res.status(500).json({ error: 'Spotify client ID not configured' })
+  if (!CLIENT_ID || !CLIENT_SECRET) {
+    console.error('Missing Spotify credentials:', { CLIENT_ID, CLIENT_SECRET })
+    return res.status(500).json({ error: 'Spotify credentials not configured' })
   }
 
-  const scope = 'user-read-private user-read-email user-read-currently-playing user-read-playback-state user-modify-playback-state user-read-recently-played playlist-read-private playlist-read-collaborative'
+  const scope = 'streaming user-read-private user-read-email user-read-currently-playing user-read-playback-state user-modify-playback-state user-read-recently-played playlist-read-private playlist-read-collaborative'
   const state = Math.random().toString(36).substring(2, 15)
   
   const authURL = 'https://accounts.spotify.com/authorize?' +
@@ -118,7 +119,7 @@ router.get('/callback', async (req, res) => {
     tokenExpiry = Date.now() + (response.data.expires_in * 1000)
 
     // Redirect to frontend with success
-    res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}?spotify_auth=success`)
+    res.redirect(`${process.env.FRONTEND_URL || 'http://127.0.0.1:3000'}?spotify_auth=success`)
   } catch (error: any) {
     console.error('Spotify token exchange error:', error.response?.data || error.message)
     res.status(500).json({ 
