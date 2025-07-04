@@ -99,7 +99,7 @@ export function LeetCodeSection() {
       
       // If API is not available, add to local state for demo purposes
       try {
-        await leetcodeApi.createProblem(formData)
+      await leetcodeApi.createProblem(formData)
         await loadProblems()
       } catch (apiError) {
         console.warn('API not available, using local state:', apiError)
@@ -152,7 +152,7 @@ export function LeetCodeSection() {
       setIsLoading(true)
       
       try {
-        await leetcodeApi.updateProblem(editingProblem._id, formData)
+      await leetcodeApi.updateProblem(editingProblem._id, formData)
         await loadProblems()
       } catch (apiError) {
         console.warn('API not available, using local state:', apiError)
@@ -205,7 +205,7 @@ export function LeetCodeSection() {
       setIsLoading(true)
       
       try {
-        await leetcodeApi.deleteProblem(deletingProblemId)
+      await leetcodeApi.deleteProblem(deletingProblemId)
         await loadProblems()
       } catch (apiError) {
         console.warn('API not available, using local state:', apiError)
@@ -255,17 +255,17 @@ export function LeetCodeSection() {
     <div className="space-y-8 animate-fade-in">
       {/* Header */}
       <div className="leetcode-header">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
             <h1 className="text-3xl font-bold gradient-text">LeetCode Tracking</h1>
             <p className="subtitle-text mt-2">
-              Track your problem-solving progress and analyze your performance
-            </p>
-          </div>
+            Track your problem-solving progress and analyze your performance
+          </p>
+        </div>
           <Button onClick={openAddDialog} className="modern-button w-fit">
-            <Plus className="mr-2 h-4 w-4" />
-            Add Problem
-          </Button>
+          <Plus className="mr-2 h-4 w-4" />
+          Add Problem
+        </Button>
         </div>
       </div>
 
@@ -298,56 +298,56 @@ export function LeetCodeSection() {
 
       {/* Main Content Tabs */}
       <div className="leetcode-content">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2 mb-6">
-            <TabsTrigger value="problems" className="flex items-center gap-2">
-              <TableIcon className="h-4 w-4" />
-              Problems
-              {pagination.totalProblems > 0 && (
+          <TabsTrigger value="problems" className="flex items-center gap-2">
+            <TableIcon className="h-4 w-4" />
+            Problems
+            {pagination.totalProblems > 0 && (
                 <Badge variant="secondary" className="ml-2">{pagination.totalProblems}</Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="analytics" className="flex items-center gap-2">
-              <BarChart3 className="h-4 w-4" />
-              Analytics
-            </TabsTrigger>
-          </TabsList>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="analytics" className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" />
+            Analytics
+          </TabsTrigger>
+        </TabsList>
 
-          <TabsContent value="problems" className="space-y-4">
-            <LeetCodeTable
-              problems={problems}
-              pagination={pagination}
-              filters={filters}
-              onFiltersChange={handleFiltersChange}
-              onEdit={handleEditProblem}
-              onDelete={handleDeleteClick}
-              isLoading={isLoading}
+        <TabsContent value="problems" className="space-y-4">
+          <LeetCodeTable
+            problems={problems}
+            pagination={pagination}
+            filters={filters}
+            onFiltersChange={handleFiltersChange}
+            onEdit={handleEditProblem}
+            onDelete={handleDeleteClick}
+            isLoading={isLoading}
+          />
+        </TabsContent>
+
+        <TabsContent value="analytics" className="space-y-4">
+          {analytics ? (
+            <LeetCodeAnalytics 
+              data={analytics} 
+              isLoading={isAnalyticsLoading}
             />
-          </TabsContent>
-
-          <TabsContent value="analytics" className="space-y-4">
-            {analytics ? (
-              <LeetCodeAnalytics 
-                data={analytics} 
-                isLoading={isAnalyticsLoading}
-              />
-            ) : (
-              <div className="text-center py-12">
+          ) : (
+            <div className="text-center py-12">
                 <BarChart3 className="h-12 w-12 text-slate-400 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">
-                  No Analytics Available
-                </h3>
+                No Analytics Available
+              </h3>
                 <p className="subtitle-text mb-4">
-                  Add some problems to see your analytics
-                </p>
+                Add some problems to see your analytics
+              </p>
                 <Button onClick={openAddDialog} className="modern-button">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Your First Problem
-                </Button>
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Your First Problem
+              </Button>
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
       </div>
 
       {/* Add/Edit Problem Dialog */}

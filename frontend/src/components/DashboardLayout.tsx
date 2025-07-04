@@ -156,7 +156,7 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
                 <p className="text-sm subtitle-text">CS Dashboard</p>
               </div>
               <div className="ml-auto">
-                <DarkModeToggle />
+              <DarkModeToggle />
               </div>
             </SidebarHeader>
             
@@ -171,7 +171,7 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
                       collapsed={collapsed}
                       isActive={location.pathname === item.to}
                     />
-                  </SidebarMenuItem>
+                </SidebarMenuItem>
                 ))}
               </SidebarMenu>
             </SidebarContent>
