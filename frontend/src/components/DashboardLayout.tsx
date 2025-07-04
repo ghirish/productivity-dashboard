@@ -26,21 +26,34 @@ import { Link, useLocation } from 'react-router-dom'
 
 // Enhanced Dark mode toggle with smooth transitions
 function DarkModeToggle() {
-  const [dark, setDark] = useState(() =>
-    typeof window !== 'undefined' ? document.documentElement.classList.contains('dark') : false
-  )
+  const [dark, setDark] = useState(() => {
+    if (typeof window !== 'undefined') {
+      // Check localStorage first, fallback to system preference
+      const savedTheme = localStorage.getItem('theme')
+      if (savedTheme) {
+        return savedTheme === 'dark'
+      }
+      // Check system preference
+      return window.matchMedia('(prefers-color-scheme: dark)').matches
+    }
+    return false
+  })
+
+  // Apply theme on initial load and when dark state changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      if (dark) {
+        document.documentElement.classList.add('dark')
+        localStorage.setItem('theme', 'dark')
+      } else {
+        document.documentElement.classList.remove('dark')
+        localStorage.setItem('theme', 'light')
+      }
+    }
+  }, [dark])
   
   const toggle = () => {
-    setDark((d) => {
-      if (typeof window !== 'undefined') {
-        if (document.documentElement.classList.contains('dark')) {
-          document.documentElement.classList.remove('dark')
-        } else {
-          document.documentElement.classList.add('dark')
-        }
-      }
-      return !d
-    })
+    setDark(prev => !prev)
   }
 
   return (

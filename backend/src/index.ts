@@ -13,6 +13,9 @@ import jobsRoutes from './routes/jobs'
 import pomodoroRoutes from './routes/pomodoro'
 import todosRoutes from './routes/todos'
 
+// Import services
+import scheduler from './services/scheduler'
+
 // Load environment variables
 dotenv.config()
 
@@ -79,9 +82,17 @@ app.use('*', (req, res) => {
 // Start server
 const startServer = async () => {
   await connectDB()
+  
+  // Start the job scraping scheduler
+  scheduler.start()
+  
   app.listen(PORT, () => {
     console.log(`🚀 Server is running on port ${PORT}`)
     console.log(`📊 Dashboard API: http://localhost:${PORT}/api/health`)
+    const nextRun = scheduler.getNextRun()
+    if (nextRun) {
+      console.log(`⏰ Next job scraping scheduled for: ${nextRun.toLocaleString()}`)
+    }
   })
 }
 

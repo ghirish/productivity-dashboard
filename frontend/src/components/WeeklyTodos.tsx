@@ -77,6 +77,7 @@ export const WeeklyTodos: React.FC = () => {
     Saturday: [],
     Sunday: []
   })
+  const [isInitialized, setIsInitialized] = useState(false)
 
   const [showAddDialog, setShowAddDialog] = useState(false)
   const [editingTask, setEditingTask] = useState<{ task: TodoTask; day: string } | null>(null)
@@ -112,12 +113,15 @@ export const WeeklyTodos: React.FC = () => {
         console.error('Failed to load tasks from localStorage:', error)
       }
     }
+    setIsInitialized(true)
   }, [])
 
-  // Save tasks to localStorage whenever tasks change
+  // Save tasks to localStorage whenever tasks change (but only after initialization)
   useEffect(() => {
-    localStorage.setItem('weeklyTodos', JSON.stringify(tasks))
-  }, [tasks])
+    if (isInitialized) {
+      localStorage.setItem('weeklyTodos', JSON.stringify(tasks))
+    }
+  }, [tasks, isInitialized])
 
   const resetForm = () => {
     setFormData({
