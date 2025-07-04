@@ -21,7 +21,7 @@ export class JobScraper {
     },
     SWE2025: {
       name: '2025-swe-college-jobs' as const,
-      url: 'https://github.com/speedyapply/2025-SWE-College-Jobs',
+      url: 'https://github.com/speedyapply/2025-SWE-College-Jobs/blob/main/README.md',
       rawUrl: 'https://raw.githubusercontent.com/speedyapply/2025-SWE-College-Jobs/main/README.md'
     }
   }
@@ -199,13 +199,25 @@ export class JobScraper {
 
     // Parse markdown table
     const lines = content.split('\n')
+    let foundOtherSection = false
     let inTable = false
     
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim()
+
+      // Look for "Other" section
+      if (line === '### Other' || line === '## Other') {
+        foundOtherSection = true
+        continue
+      }
+      
+      // Only start looking for table after finding "Other" section
+      if (!foundOtherSection) {
+        continue
+      }
       
       // Detect table header
-      if (line.includes('| Company |') && line.includes('| Position |')) {
+      if (line.startsWith('| Company') && line.includes('| Position |')) {
         inTable = true
         continue
       }
@@ -215,8 +227,8 @@ export class JobScraper {
         continue
       }
       
-      // End of table (next section)
-      if (inTable && (!line.startsWith('|') || line.length < 10)) {
+      // End of table (next section or end of content)
+      if (inTable && (!line.startsWith('|') || line.length < 10 || line.startsWith('#'))) {
         break
       }
       
@@ -242,10 +254,10 @@ export class JobScraper {
   private parseSWE2025Row(line: string): ScrapedJob | null {
     const cells = line.split('|').map(cell => cell.trim()).filter(cell => cell.length > 0)
     
-    if (cells.length < 6) return null
+    if (cells.length < 5) return null
 
-    // Expected format: | Company | Position | Location | Salary | Posting | Age |
-    const [company, position, location, salary, posting, age] = cells
+    // Expected format: | Company | Position | Location | Posting | Age |
+    const [company, position, location, posting, age] = cells
     
     if (!company || !position || !location || !age) return null
 
@@ -253,8 +265,7 @@ export class JobScraper {
     const companyName = this.extractText(company)
     const positionTitle = this.extractText(position)
     const locationText = this.extractText(location)
-    const salaryText = this.extractText(salary)
-    const applicationUrl = this.extractUrl(posting)
+    const applicationUrl = this.extractUrl(posting) || this.extractUrl(company) // Try company cell if posting doesn't have URL
     const ageText = this.extractText(age)
     
     if (!applicationUrl || !companyName || !positionTitle) return null
@@ -263,7 +274,6 @@ export class JobScraper {
       title: positionTitle,
       company: companyName,
       location: locationText,
-      salary: salaryText !== '-' ? salaryText : undefined,
       applicationUrl,
       ageText,
       postedDate: this.parseAgeToDate(ageText)
