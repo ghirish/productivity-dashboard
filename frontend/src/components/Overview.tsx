@@ -39,7 +39,8 @@ import {
   Briefcase,
   Filter,
   RefreshCw,
-  Building
+  Building,
+  History
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
@@ -874,6 +875,12 @@ const JobsDashboard: React.FC = () => {
   const [jobs, setJobs] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [jobStats, setJobStats] = useState({
+    totalJobs: 0,
+    newJobs: 0,
+    appliedJobs: 0,
+    remainingJobs: 0
+  })
   const [filters, setFilters] = useState({
     days: '3',
     status: 'all',
@@ -893,12 +900,28 @@ const JobsDashboard: React.FC = () => {
         ...(filters.location && { location: filters.location })
       })
 
-      const response = await fetch(`${API_BASE}/api/jobs?${queryParams}`)
-      if (!response.ok) {
+      // Fetch jobs and statistics
+      const [jobsResponse, statsResponse] = await Promise.all([
+        fetch(`${API_BASE}/api/jobs?${queryParams}`),
+        fetch(`${API_BASE}/api/jobs/stats`)
+      ])
+
+      if (!jobsResponse.ok) {
         throw new Error('Failed to fetch jobs')
       }
-      const data = await response.json()
-      setJobs(data.jobs || [])
+
+      const jobsData = await jobsResponse.json()
+      setJobs(jobsData.jobs || [])
+
+      if (statsResponse.ok) {
+        const statsData = await statsResponse.json()
+        setJobStats({
+          totalJobs: statsData.totalJobs || 0,
+          newJobs: statsData.byStatus?.new || 0,
+          appliedJobs: (statsData.byStatus?.applied || 0) + (statsData.byStatus?.interview || 0) + (statsData.byStatus?.offer || 0),
+          remainingJobs: (statsData.byStatus?.new || 0) + (statsData.byStatus?.interested || 0)
+        })
+      }
     } catch (err: any) {
       setError(err.message)
     } finally {
@@ -973,6 +996,42 @@ const JobsDashboard: React.FC = () => {
                 <ChevronRight className="w-4 h-4 ml-1" />
               </Button>
             </Link>
+          </div>
+        </div>
+        
+        {/* Job Statistics */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+          <div className="text-center p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
+            <div className="text-xl font-bold text-blue-700 dark:text-blue-300">
+              {jobStats.totalJobs}
+            </div>
+            <div className="text-xs text-blue-600 dark:text-blue-400">
+              Total Jobs
+            </div>
+          </div>
+          <div className="text-center p-3 bg-yellow-50 dark:bg-yellow-950/30 rounded-lg">
+            <div className="text-xl font-bold text-yellow-700 dark:text-yellow-300">
+              {jobStats.remainingJobs}
+            </div>
+            <div className="text-xs text-yellow-600 dark:text-yellow-400">
+              To Review
+            </div>
+          </div>
+          <div className="text-center p-3 bg-green-50 dark:bg-green-950/30 rounded-lg">
+            <div className="text-xl font-bold text-green-700 dark:text-green-300">
+              {jobStats.appliedJobs}
+            </div>
+            <div className="text-xs text-green-600 dark:text-green-400">
+              Applied
+            </div>
+          </div>
+          <div className="text-center p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
+            <div className="text-xl font-bold text-slate-700 dark:text-slate-300">
+              {jobStats.newJobs}
+            </div>
+            <div className="text-xs text-slate-600 dark:text-slate-400">
+              New Today
+            </div>
           </div>
         </div>
       </CardHeader>
@@ -1084,6 +1143,413 @@ const JobsDashboard: React.FC = () => {
           </div>
         )}
       </CardContent>
+    </Card>
+  )
+}
+
+// Enhanced Focus Timer Dashboard Component
+const FocusTimerDashboard: React.FC = () => {
+  // Timer settings
+  const [settings, setSettings] = useState({
+    workDuration: 25,
+    shortBreakDuration: 5,
+    longBreakDuration: 15,
+    autoStartBreaks: false,
+    soundEnabled: true
+  })
+
+  // Timer state
+  const [currentSession, setCurrentSession] = useState<'work' | 'shortBreak' | 'longBreak'>('work')
+  const [timeLeft, setTimeLeft] = useState(settings.workDuration * 60)
+  const [isRunning, setIsRunning] = useState(false)
+  const [completedSessions, setCompletedSessions] = useState(0)
+  const [workSessionsCompleted, setWorkSessionsCompleted] = useState(0)
+  const [showHistory, setShowHistory] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
+  const [sessionHistory, setSessionHistory] = useState<any[]>([])
+
+  const intervalRef = useRef<NodeJS.Timeout | null>(null)
+
+  const sessionConfigs = {
+    work: {
+      label: 'Focus Time',
+      color: 'text-blue-600 dark:text-blue-400',
+      bgColor: 'bg-blue-50 dark:bg-blue-950/30',
+      duration: settings.workDuration,
+      icon: Brain
+    },
+    shortBreak: {
+      label: 'Short Break',
+      color: 'text-emerald-600 dark:text-emerald-400',
+      bgColor: 'bg-emerald-50 dark:bg-emerald-950/30',
+      duration: settings.shortBreakDuration,
+      icon: Coffee
+    },
+    longBreak: {
+      label: 'Long Break',
+      color: 'text-purple-600 dark:text-purple-400',
+      bgColor: 'bg-purple-50 dark:bg-purple-950/30',
+      duration: settings.longBreakDuration,
+      icon: Coffee
+    }
+  }
+
+  // Load sessions from localStorage
+  useEffect(() => {
+    const savedSessions = localStorage.getItem('pomodoroSessions')
+    if (savedSessions) {
+      const sessions = JSON.parse(savedSessions)
+      const todayStr = new Date().toDateString()
+      const todaySessions = sessions.filter((session: any) => 
+        new Date(session.startTime).toDateString() === todayStr
+      )
+      setSessionHistory(sessions.slice(0, 10)) // Show last 10 sessions
+      setCompletedSessions(todaySessions.length)
+      setWorkSessionsCompleted(todaySessions.filter((s: any) => s.type === 'work').length)
+    }
+  }, [])
+
+  // Timer logic
+  useEffect(() => {
+    if (isRunning && timeLeft > 0) {
+      intervalRef.current = setInterval(() => {
+        setTimeLeft(prev => prev - 1)
+      }, 1000)
+    } else {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+        intervalRef.current = null
+      }
+    }
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+      }
+    }
+  }, [isRunning, timeLeft])
+
+  // Handle session completion
+  useEffect(() => {
+    if (timeLeft === 0 && isRunning) {
+      setIsRunning(false)
+      
+      // Save completed session
+      const completedSession = {
+        id: `session-${Date.now()}`,
+        type: currentSession,
+        duration: sessionConfigs[currentSession].duration,
+        completed: true,
+        startTime: new Date(Date.now() - sessionConfigs[currentSession].duration * 60 * 1000),
+        endTime: new Date()
+      }
+
+      const savedSessions = JSON.parse(localStorage.getItem('pomodoroSessions') || '[]')
+      localStorage.setItem('pomodoroSessions', JSON.stringify([completedSession, ...savedSessions]))
+      
+      setSessionHistory(prev => [completedSession, ...prev].slice(0, 10))
+      setCompletedSessions(prev => prev + 1)
+      
+      if (currentSession === 'work') {
+        setWorkSessionsCompleted(prev => prev + 1)
+        const nextSession = (workSessionsCompleted + 1) % 4 === 0 ? 'longBreak' : 'shortBreak'
+        setCurrentSession(nextSession)
+        setTimeLeft(sessionConfigs[nextSession].duration * 60)
+      } else {
+        setCurrentSession('work')
+        setTimeLeft(sessionConfigs.work.duration * 60)
+      }
+
+      // Browser notification
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification('Focus Timer', {
+          body: currentSession === 'work' ? 'Work session complete! Time for a break.' : 'Break complete! Ready to focus?',
+          icon: '/favicon.ico'
+        })
+      }
+    }
+  }, [timeLeft, isRunning, currentSession, workSessionsCompleted])
+
+  // Update timer when session type changes
+  useEffect(() => {
+    const config = sessionConfigs[currentSession]
+    setTimeLeft(config.duration * 60)
+  }, [currentSession, settings])
+
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+  }
+
+  const handleStart = () => {
+    setIsRunning(true)
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission()
+    }
+  }
+
+  const handlePause = () => {
+    setIsRunning(false)
+  }
+
+  const handleReset = () => {
+    setIsRunning(false)
+    const config = sessionConfigs[currentSession]
+    setTimeLeft(config.duration * 60)
+  }
+
+  const switchSession = (type: 'work' | 'shortBreak' | 'longBreak') => {
+    setIsRunning(false)
+    setCurrentSession(type)
+  }
+
+  const config = sessionConfigs[currentSession]
+  const Icon = config.icon
+  const progress = ((config.duration * 60 - timeLeft) / (config.duration * 60)) * 100
+
+  return (
+    <Card className="glass-card">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="gradient-text flex items-center gap-2">
+              <Brain className="w-5 h-5" />
+              Focus Timer
+            </CardTitle>
+            <CardDescription>
+              Use the Pomodoro Technique to boost your productivity
+            </CardDescription>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={() => setShowHistory(true)}
+              variant="outline"
+              size="sm"
+              className="border-slate-300 dark:border-slate-600"
+            >
+              <History className="w-4 h-4 mr-1" />
+              History
+            </Button>
+            <Link to="/productivity">
+              <Button size="sm" variant="outline" className="border-slate-300 dark:border-slate-600">
+                Full Timer
+                <ChevronRight className="w-4 h-4 ml-1" />
+              </Button>
+            </Link>
+          </div>
+        </div>
+
+        {/* Session Statistics */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+          <div className="text-center p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
+            <div className="text-xl font-bold text-blue-700 dark:text-blue-300">
+              {completedSessions}
+            </div>
+            <div className="text-xs text-blue-600 dark:text-blue-400">
+              Sessions Today
+            </div>
+          </div>
+          <div className="text-center p-3 bg-purple-50 dark:bg-purple-950/30 rounded-lg">
+            <div className="text-xl font-bold text-purple-700 dark:text-purple-300">
+              {workSessionsCompleted}
+            </div>
+            <div className="text-xs text-purple-600 dark:text-purple-400">
+              Focus Sessions
+            </div>
+          </div>
+          <div className="text-center p-3 bg-emerald-50 dark:bg-emerald-950/30 rounded-lg">
+            <div className="text-xl font-bold text-emerald-700 dark:text-emerald-300">
+              {Math.floor((workSessionsCompleted * 25) / 60)}h {(workSessionsCompleted * 25) % 60}m
+            </div>
+            <div className="text-xs text-emerald-600 dark:text-emerald-400">
+              Focus Time
+            </div>
+          </div>
+          <div className="text-center p-3 bg-orange-50 dark:bg-orange-950/30 rounded-lg">
+            <div className="text-xl font-bold text-orange-700 dark:text-orange-300">
+              {workSessionsCompleted > 0 ? Math.floor(workSessionsCompleted / 4) : 0}
+            </div>
+            <div className="text-xs text-orange-600 dark:text-orange-400">
+              Pomodoro Cycles
+            </div>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {/* Session Type Selector */}
+        <div className="flex justify-center gap-2 mb-6">
+          {Object.entries(sessionConfigs).map(([type, conf]) => (
+            <button
+              key={type}
+              onClick={() => switchSession(type as any)}
+              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                currentSession === type
+                  ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+              }`}
+            >
+              {conf.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Timer Display */}
+          <div className="text-center">
+            <div className="relative w-40 h-40 mx-auto mb-4">
+              <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="40"
+                  stroke="currentColor"
+                  strokeWidth="6"
+                  fill="none"
+                  className="text-slate-200 dark:text-slate-700"
+                />
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="40"
+                  stroke="currentColor"
+                  strokeWidth="6"
+                  fill="none"
+                  strokeDasharray={`${2 * Math.PI * 40}`}
+                  strokeDashoffset={`${2 * Math.PI * 40 * (1 - progress / 100)}`}
+                  className={config.color}
+                  style={{ transition: 'stroke-dashoffset 1s ease' }}
+                />
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <Icon className={`w-6 h-6 ${config.color} mb-1`} />
+                <div className="text-2xl font-bold text-slate-900 dark:text-white">
+                  {formatTime(timeLeft)}
+                </div>
+                <div className="text-xs text-slate-500 dark:text-slate-400">
+                  {isRunning ? 'Running' : 'Paused'}
+                </div>
+              </div>
+            </div>
+
+            {/* Controls */}
+            <div className="flex justify-center gap-3">
+              <Button
+                onClick={isRunning ? handlePause : handleStart}
+                className="modern-button"
+              >
+                {isRunning ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+              </Button>
+              <Button
+                onClick={handleReset}
+                variant="outline"
+                className="border-slate-300 dark:border-slate-600"
+              >
+                <RotateCcw className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Recent Sessions */}
+          <div>
+            <h3 className="font-semibold text-slate-700 dark:text-slate-200 mb-3">
+              Recent Sessions
+            </h3>
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              {sessionHistory.length === 0 ? (
+                <div className="text-center py-8 text-slate-500">
+                  No sessions completed yet
+                </div>
+              ) : (
+                sessionHistory.map((session, index) => {
+                  const sessionConfig = sessionConfigs[session.type as keyof typeof sessionConfigs]
+                  const SessionIcon = sessionConfig?.icon || Clock
+                  return (
+                    <div
+                      key={session.id || index}
+                      className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-800 rounded-lg"
+                    >
+                      <div className="flex items-center gap-2">
+                        <SessionIcon className={`w-4 h-4 ${sessionConfig?.color || 'text-slate-500'}`} />
+                        <div>
+                          <div className="text-sm font-medium text-slate-900 dark:text-white">
+                            {sessionConfig?.label || 'Session'}
+                          </div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400">
+                            {session.duration} min
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                          {new Date(session.startTime).toLocaleTimeString([], { 
+                            hour: '2-digit', 
+                            minute: '2-digit' 
+                          })}
+                        </div>
+                        <Badge variant="outline" className="text-xs">
+                          Completed
+                        </Badge>
+                      </div>
+                    </div>
+                  )
+                })
+              )}
+            </div>
+          </div>
+        </div>
+      </CardContent>
+
+      {/* History Dialog */}
+      <Dialog open={showHistory} onOpenChange={setShowHistory}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="gradient-text">Session History</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 max-h-96 overflow-y-auto">
+            {sessionHistory.length === 0 ? (
+              <div className="text-center py-8">
+                <Clock className="w-12 h-12 text-slate-400 mx-auto mb-4" />
+                <p className="subtitle-text">No sessions completed yet</p>
+              </div>
+            ) : (
+              sessionHistory.map((session, index) => {
+                const sessionConfig = sessionConfigs[session.type as keyof typeof sessionConfigs]
+                const SessionIcon = sessionConfig?.icon || Clock
+                return (
+                  <div
+                    key={session.id || index}
+                    className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-lg"
+                  >
+                    <div className="flex items-center gap-3">
+                      <SessionIcon className={`w-5 h-5 ${sessionConfig?.color || 'text-slate-500'}`} />
+                      <div>
+                        <div className="font-medium text-slate-900 dark:text-white">
+                          {sessionConfig?.label || 'Session'}
+                        </div>
+                        <div className="text-sm text-slate-500 dark:text-slate-400">
+                          {session.duration} minutes
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                        {new Date(session.startTime).toLocaleTimeString([], { 
+                          hour: '2-digit', 
+                          minute: '2-digit' 
+                        })}
+                      </div>
+                      <Badge variant="outline" className="text-xs">
+                        Completed
+                      </Badge>
+                    </div>
+                  </div>
+                )
+              })
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </Card>
   )
 }
@@ -1340,7 +1806,7 @@ export const Overview: React.FC = () => {
         </Card>
 
         {/* Focus Timer Widget */}
-        <FocusTimerWidget />
+        <FocusTimerDashboard />
 
         {/* Large Square Spotify Player */}
         <div className="lg:col-span-2">
@@ -1377,7 +1843,7 @@ export const Overview: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Today's Focus - Redesigned */}
+      {/* Weekly Planning & Today's Focus */}
       <Card className="glass-card">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
@@ -1416,101 +1882,75 @@ export const Overview: React.FC = () => {
 
             {/* Today's Tasks Detail - Right Side */}
             <div>
-              <div className="mb-4">
-                <h3 className="font-semibold text-slate-700 dark:text-slate-200 mb-2">
-                  {selectedDay === today ? "Today's Tasks" : `${selectedDay}'s Tasks`}
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-slate-700 dark:text-slate-200">
+                  {selectedDay === 'today' ? "Today's Tasks" : `${selectedDay} Tasks`}
                 </h3>
-                <div className="flex items-center gap-2">
-                  {selectedDay === today && (
-                    <Badge variant="secondary" className="text-xs">Today</Badge>
-                  )}
-                  <span className="text-sm text-slate-500 dark:text-slate-400">
-                    {todayTasks.filter(t => t.completed).length} of {todayTasks.length} completed
-                  </span>
-                </div>
+                <Button
+                  onClick={() => setShowAddDialog(true)}
+                  size="sm"
+                  className="modern-button"
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add
+                </Button>
               </div>
-
-              {/* Detailed Task List */}
-              <div className="space-y-3 max-h-96 overflow-y-auto">
+              
+              <div className="space-y-3 max-h-80 overflow-y-auto">
                 {todayTasks.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Calendar className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                      No tasks for {selectedDay === today ? 'today' : selectedDay} yet
-                    </p>
-                    <Button onClick={openAddDialog} size="sm" className="modern-button">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add Task
-                    </Button>
+                  <div className="text-center py-8 text-slate-500 dark:text-slate-400">
+                    <Target className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">No tasks for {selectedDay === 'today' ? 'today' : selectedDay}</p>
                   </div>
                 ) : (
-                  <>
-                    {todayTasks.map((task) => (
-                      <div
-                        key={task.id}
-                        className="p-4 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className={`w-3 h-3 rounded-full mt-1 flex-shrink-0 ${
-                            task.completed 
-                              ? 'bg-emerald-500' 
-                              : task.priority === 'high' 
-                                ? 'bg-red-500' 
-                                : task.priority === 'medium' 
-                                  ? 'bg-amber-500' 
-                                  : 'bg-slate-400'
-                          }`} />
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between mb-1">
-                              <h4 className={`text-sm font-medium ${
-                                task.completed 
-                                  ? 'line-through text-slate-500 dark:text-slate-400' 
-                                  : 'text-slate-900 dark:text-white'
-                              }`}>
-                                {task.title}
-                              </h4>
-                              <div className="flex items-center gap-2">
-                                <Badge variant="outline" className={`text-xs ${priorityColors[task.priority]}`}>
-                                  {task.priority}
-                                </Badge>
-                                {task.estimatedTime && (
-                                  <Badge variant="outline" className="text-xs">
-                                    {task.estimatedTime}m
-                                  </Badge>
-                                )}
-                              </div>
-                            </div>
-                            {task.description && (
-                              <p className={`text-xs ${
-                                task.completed 
-                                  ? 'line-through text-slate-400 dark:text-slate-500' 
-                                  : 'text-slate-600 dark:text-slate-300'
-                              }`}>
-                                {task.description}
-                              </p>
-                            )}
-                            <div className="flex items-center gap-2 mt-2">
-                              <Badge variant="outline" className="text-xs">
-                                {task.category}
+                  todayTasks.map((task) => (
+                    <div
+                      key={task.id}
+                      className={`p-3 rounded-lg border transition-colors ${
+                        task.completed
+                          ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800'
+                          : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-start gap-3 flex-1">
+                          <button
+                            onClick={() => toggleTask(task.id)}
+                            className={`mt-0.5 w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${
+                              task.completed
+                                ? 'bg-emerald-500 border-emerald-500 text-white'
+                                : 'border-slate-300 dark:border-slate-600 hover:border-emerald-500'
+                            }`}
+                          >
+                            {task.completed && <CheckCircle className="w-3 h-3" />}
+                          </button>
+                          <div className="flex-1">
+                            <h4 className={`font-medium ${
+                              task.completed 
+                                ? 'text-emerald-700 dark:text-emerald-300 line-through' 
+                                : 'text-slate-900 dark:text-white'
+                            }`}>
+                              {task.title}
+                            </h4>
+                            <div className="flex items-center gap-2 mt-1">
+                              <Badge 
+                                variant="outline" 
+                                className={`text-xs ${getPriorityColor(task.priority)}`}
+                              >
+                                {task.priority}
                               </Badge>
-                              {task.completed && task.completedAt && (
-                                <span className="text-xs text-emerald-600 dark:text-emerald-400">
-                                  ✓ Completed
+                              {task.estimatedTime && (
+                                <span className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                                  <Clock className="w-3 h-3" />
+                                  {task.estimatedTime}
                                 </span>
                               )}
                             </div>
                           </div>
                         </div>
                       </div>
-                    ))}
-                    
-                    <div className="text-center pt-4 border-t border-slate-200 dark:border-slate-700">
-                      <Button onClick={openAddDialog} variant="outline" size="sm" className="w-full">
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add More Tasks
-                      </Button>
                     </div>
-                  </>
+                  ))
                 )}
               </div>
             </div>
@@ -1527,29 +1967,29 @@ export const Overview: React.FC = () => {
           <CardTitle className="gradient-text">Quick Actions</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <Link to="/leetcode">
-              <Button variant="outline" className="w-full h-16 flex flex-col items-center gap-1 border-slate-300 dark:border-slate-600">
-                <BookOpen className="w-5 h-5" />
-                <span className="text-xs">LeetCode</span>
+              <Button variant="outline" className="w-full h-20 flex-col gap-2 border-slate-300 dark:border-slate-600">
+                <Code className="w-6 h-6" />
+                <span className="text-sm">LeetCode</span>
               </Button>
             </Link>
             <Link to="/productivity">
-              <Button variant="outline" className="w-full h-16 flex flex-col items-center gap-1 border-slate-300 dark:border-slate-600">
-                <Target className="w-5 h-5" />
-                <span className="text-xs">Productivity</span>
+              <Button variant="outline" className="w-full h-20 flex-col gap-2 border-slate-300 dark:border-slate-600">
+                <Target className="w-6 h-6" />
+                <span className="text-sm">Productivity</span>
               </Button>
             </Link>
             <Link to="/integrations">
-              <Button variant="outline" className="w-full h-16 flex flex-col items-center gap-1 border-slate-300 dark:border-slate-600">
-                <Zap className="w-5 h-5" />
-                <span className="text-xs">Integrations</span>
+              <Button variant="outline" className="w-full h-20 flex-col gap-2 border-slate-300 dark:border-slate-600">
+                <Zap className="w-6 h-6" />
+                <span className="text-sm">Integrations</span>
               </Button>
             </Link>
-            <Link to="/analytics">
-              <Button variant="outline" className="w-full h-16 flex flex-col items-center gap-1 border-slate-300 dark:border-slate-600">
-                <TrendingUp className="w-5 h-5" />
-                <span className="text-xs">Analytics</span>
+            <Link to="/jobs">
+              <Button variant="outline" className="w-full h-20 flex-col gap-2 border-slate-300 dark:border-slate-600">
+                <Briefcase className="w-6 h-6" />
+                <span className="text-sm">Jobs</span>
               </Button>
             </Link>
           </div>
