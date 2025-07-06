@@ -367,15 +367,51 @@ export const GitHubSection: React.FC = () => {
           <CardContent>
             {contributions?.contributionData ? (
               <div className="space-y-4">
-                <div className="grid grid-cols-53 gap-1">
-                  {contributions.contributionData.map((day, index) => (
-                    <div
-                      key={index}
-                      className={`w-3 h-3 rounded-sm ${getContributionColor(day.level)}`}
-                      title={`${day.count} contributions on ${day.date}`}
-                    />
-                  ))}
+                {/* Week day labels */}
+                <div className="flex">
+                  <div className="w-8"></div> {/* Spacer for alignment */}
+                  <div className="flex-1 grid grid-cols-[repeat(53,1fr)] gap-1">
+                    {Array.from({ length: 53 }).map((_, weekIndex) => (
+                      <div key={weekIndex} className="flex flex-col gap-1">
+                        {Array.from({ length: 7 }).map((_, dayIndex) => {
+                          const dayData = contributions.contributionData[weekIndex * 7 + dayIndex]
+                          return dayData ? (
+                            <div
+                              key={dayIndex}
+                              className={`w-3 h-3 rounded-sm ${getContributionColor(dayData.level)}`}
+                              title={`${dayData.count} contributions on ${formatDate(dayData.date)}`}
+                            />
+                          ) : (
+                            <div
+                              key={dayIndex}
+                              className="w-3 h-3 rounded-sm bg-slate-100 dark:bg-slate-800"
+                            />
+                          )
+                        })}
+                      </div>
+                    ))}
+                  </div>
                 </div>
+                
+                {/* Month labels */}
+                <div className="flex">
+                  <div className="w-8"></div> {/* Spacer to align with grid */}
+                  <div className="flex-1 flex justify-between text-xs text-slate-500 dark:text-slate-400">
+                    <span>Jan</span>
+                    <span>Feb</span>
+                    <span>Mar</span>
+                    <span>Apr</span>
+                    <span>May</span>
+                    <span>Jun</span>
+                    <span>Jul</span>
+                    <span>Aug</span>
+                    <span>Sep</span>
+                    <span>Oct</span>
+                    <span>Nov</span>
+                    <span>Dec</span>
+                  </div>
+                </div>
+                
                 <div className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-1">

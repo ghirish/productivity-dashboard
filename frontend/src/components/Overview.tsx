@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card'
 import { Button } from './ui/button'
 import { Badge } from './ui/badge'
 import { Progress } from './ui/progress'
@@ -34,9 +34,16 @@ import {
   Volume2,
   RotateCcw,
   X,
-  Flag
+  Flag,
+  MapPin,
+  Briefcase,
+  Filter,
+  RefreshCw,
+  Building
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs'
 
 // Productivity data types
 interface TodayTask {
@@ -278,6 +285,7 @@ const GitHubContributionChart: React.FC<{ contributionData?: any }> = ({ contrib
       data.push({
         date: d.toISOString().split('T')[0],
         count,
+        level: Math.min(4, Math.floor(count / 2)),
         dayOfWeek: d.getDay(),
         weekOfYear: Math.floor(daysSinceStart / 7)
       })
@@ -319,10 +327,8 @@ const GitHubContributionChart: React.FC<{ contributionData?: any }> = ({ contrib
 
   // Group contributions by week
   const weeks = []
-  const maxWeek = Math.max(...contributions.map((c: any) => c.weekOfYear))
-  
-  for (let week = 0; week <= maxWeek; week++) {
-    const weekContributions = contributions.filter((c: any) => c.weekOfYear === week)
+  for (let i = 0; i < 53; i++) {
+    const weekContributions = contributions.slice(i * 7, (i + 1) * 7)
     weeks.push(weekContributions)
   }
 
@@ -367,35 +373,51 @@ const GitHubContributionChart: React.FC<{ contributionData?: any }> = ({ contrib
 
         {/* Contribution grid */}
         <div className="overflow-x-auto">
-          <div className="flex gap-0.5 min-w-fit">
-            {weeks.map((week, weekIndex) => (
-              <div key={weekIndex} className="flex flex-col gap-0.5">
-                {Array.from({ length: 7 }).map((_, dayIndex) => {
-                  const contribution = week.find((c: any) => c.dayOfWeek === dayIndex)
-                  return (
-                    <div
-                      key={`${weekIndex}-${dayIndex}`}
-                      className={`w-2.5 h-2.5 rounded-sm cursor-pointer transition-all hover:scale-125 ${
-                        contribution ? getContributionColor(contribution.count) : 'bg-slate-100 dark:bg-slate-800'
-                      }`}
-                      onMouseEnter={contribution ? (e) => handleMouseEnter(contribution, e) : undefined}
-                      onMouseLeave={handleMouseLeave}
-                    />
-                  )
-                })}
-              </div>
-            ))}
+          <div className="flex">
+            {/* Day labels */}
+            <div className="flex flex-col gap-0.5 mr-2 text-xs text-slate-500 dark:text-slate-400 pt-2">
+              <div style={{ height: '10px' }}></div>
+              <div>Mon</div>
+              <div style={{ height: '10px' }}></div>
+              <div>Wed</div>
+              <div style={{ height: '10px' }}></div>
+              <div>Fri</div>
+              <div style={{ height: '10px' }}></div>
+            </div>
+            {/* Grid */}
+            <div className="flex gap-0.5 min-w-fit">
+              {weeks.map((week, weekIndex) => (
+                <div key={weekIndex} className="flex flex-col gap-0.5">
+                  {Array.from({ length: 7 }).map((_, dayIndex) => {
+                    const contribution = week[dayIndex]
+                    return (
+                      <div
+                        key={`${weekIndex}-${dayIndex}`}
+                        className={`w-2.5 h-2.5 rounded-sm cursor-pointer transition-all hover:scale-125 ${
+                          contribution ? getContributionColor(contribution.count) : 'bg-slate-100 dark:bg-slate-800'
+                        }`}
+                        onMouseEnter={contribution ? (e) => handleMouseEnter(contribution, e) : undefined}
+                        onMouseLeave={handleMouseLeave}
+                      />
+                    )
+                  })}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
         {/* Month labels */}
-        <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400 mt-2">
-          <span>Jan</span>
-          <span>Mar</span>
-          <span>May</span>
-          <span>Jul</span>
-          <span>Sep</span>
-          <span>Nov</span>
+        <div className="flex">
+          <div className="w-8 mr-2"></div> {/* Spacer to align with grid */}
+          <div className="flex-1 flex justify-between text-xs text-slate-500 dark:text-slate-400">
+            <span>Jan</span>
+            <span>Mar</span>
+            <span>May</span>
+            <span>Jul</span>
+            <span>Sep</span>
+            <span>Nov</span>
+          </div>
         </div>
       </div>
     </div>
@@ -794,8 +816,8 @@ const WeeklyTasksWidget: React.FC<{
                 </h3>
                 <span className="text-xs text-slate-500 dark:text-slate-400">
                   {completedTasks}/{tasks.length}
-                </span>
-              </div>
+    </span>
+  </div>
               
               <div className="space-y-1">
                 {tasks.length === 0 ? (
@@ -844,6 +866,225 @@ const WeeklyTasksWidget: React.FC<{
         )
       })}
     </div>
+  )
+}
+
+// Jobs Dashboard Component
+const JobsDashboard: React.FC = () => {
+  const [jobs, setJobs] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [filters, setFilters] = useState({
+    days: '3',
+    status: 'all',
+    company: '',
+    location: ''
+  })
+
+  const API_BASE = process.env.REACT_APP_API_URL || 'http://127.0.0.1:3002'
+
+  const fetchJobs = async () => {
+    try {
+      setLoading(true)
+      const queryParams = new URLSearchParams({
+        days: filters.days,
+        ...(filters.status !== 'all' && { status: filters.status }),
+        ...(filters.company && { company: filters.company }),
+        ...(filters.location && { location: filters.location })
+      })
+
+      const response = await fetch(`${API_BASE}/api/jobs?${queryParams}`)
+      if (!response.ok) {
+        throw new Error('Failed to fetch jobs')
+      }
+      const data = await response.json()
+      setJobs(data.jobs || [])
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const triggerScrape = async () => {
+    try {
+      await fetch(`${API_BASE}/api/jobs/scrape`, { method: 'POST' })
+      await fetchJobs()
+    } catch (err: any) {
+      console.error('Scrape failed:', err)
+    }
+  }
+
+  useEffect(() => {
+    fetchJobs()
+  }, [filters])
+
+  const filteredJobs = jobs.slice(0, 6) // Show only 6 most recent jobs
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'new': return 'bg-blue-50 text-blue-700 border-blue-200'
+      case 'interested': return 'bg-yellow-50 text-yellow-700 border-yellow-200'
+      case 'applied': return 'bg-green-50 text-green-700 border-green-200'
+      case 'interview': return 'bg-purple-50 text-purple-700 border-purple-200'
+      case 'offer': return 'bg-emerald-50 text-emerald-700 border-emerald-200'
+      case 'rejected': return 'bg-red-50 text-red-700 border-red-200'
+      default: return 'bg-slate-50 text-slate-700 border-slate-200'
+    }
+  }
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60))
+    
+    if (diffInHours < 1) return 'Just now'
+    if (diffInHours < 24) return `${diffInHours}h ago`
+    if (diffInHours < 48) return 'Yesterday'
+    return date.toLocaleDateString()
+  }
+
+  return (
+    <Card className="glass-card">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="gradient-text flex items-center gap-2">
+              <Briefcase className="w-5 h-5" />
+              Recent Job Opportunities
+            </CardTitle>
+            <CardDescription>
+              Latest internships and entry-level positions
+            </CardDescription>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={triggerScrape}
+              variant="outline"
+              size="sm"
+              className="border-slate-300 dark:border-slate-600"
+            >
+              <RefreshCw className="w-4 h-4 mr-1" />
+              Refresh
+            </Button>
+            <Link to="/jobs">
+              <Button size="sm" variant="outline" className="border-slate-300 dark:border-slate-600">
+                View All
+                <ChevronRight className="w-4 h-4 ml-1" />
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {/* Filters */}
+        <div className="flex flex-wrap gap-3 mb-6">
+          <Select value={filters.days} onValueChange={(value) => setFilters(prev => ({ ...prev, days: value }))}>
+            <SelectTrigger className="w-32">
+              <SelectValue placeholder="Days" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1">Today</SelectItem>
+              <SelectItem value="2">2 Days</SelectItem>
+              <SelectItem value="3">3 Days</SelectItem>
+              <SelectItem value="7">1 Week</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={filters.status} onValueChange={(value) => setFilters(prev => ({ ...prev, status: value }))}>
+            <SelectTrigger className="w-32">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="new">New</SelectItem>
+              <SelectItem value="interested">Interested</SelectItem>
+              <SelectItem value="applied">Applied</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Input
+            placeholder="Search company..."
+            value={filters.company}
+            onChange={(e) => setFilters(prev => ({ ...prev, company: e.target.value }))}
+            className="w-40"
+          />
+
+          <Input
+            placeholder="Search location..."
+            value={filters.location}
+            onChange={(e) => setFilters(prev => ({ ...prev, location: e.target.value }))}
+            className="w-40"
+          />
+        </div>
+
+        {/* Jobs List */}
+        {loading ? (
+          <div className="flex items-center justify-center py-8">
+            <RefreshCw className="w-6 h-6 animate-spin text-slate-600 dark:text-slate-300" />
+          </div>
+        ) : error ? (
+          <div className="text-center py-8 text-red-600">
+            Error loading jobs: {error}
+          </div>
+        ) : filteredJobs.length === 0 ? (
+          <div className="text-center py-8 text-slate-500">
+            No jobs found matching your criteria
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {filteredJobs.map((job, index) => (
+              <div key={job._id || index} className="border border-slate-200 dark:border-slate-700 rounded-lg p-4 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h3 className="font-semibold text-slate-900 dark:text-white line-clamp-1">
+                        {job.title}
+                      </h3>
+                      <Badge variant="outline" className={getStatusColor(job.status)}>
+                        {job.status}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center gap-4 text-sm text-slate-600 dark:text-slate-400">
+                      <div className="flex items-center gap-1">
+                        <Building className="w-4 h-4" />
+                        {job.company}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <MapPin className="w-4 h-4" />
+                        {job.location}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Clock className="w-4 h-4" />
+                        {formatDate(job.postedDate)}
+                      </div>
+                    </div>
+                    {job.salary && (
+                      <div className="text-sm text-emerald-600 dark:text-emerald-400 mt-1">
+                        {job.salary}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="text-xs">
+                      {job.source}
+                    </Badge>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-slate-300 dark:border-slate-600"
+                      onClick={() => window.open(job.applicationUrl, '_blank')}
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   )
 }
 
@@ -1115,8 +1356,13 @@ export const Overview: React.FC = () => {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="gradient-text">GitHub Contribution Activity</CardTitle>
-              <p className="subtitle-text mt-1">Your coding journey over the past year</p>
+              <CardTitle className="gradient-text flex items-center gap-2">
+                <Github className="w-5 h-5" />
+                GitHub Contribution Activity
+              </CardTitle>
+              <CardDescription>
+                Your coding journey over the past year
+              </CardDescription>
             </div>
             <Link to="/integrations">
               <Button size="sm" variant="outline" className="border-slate-300 dark:border-slate-600">
@@ -1136,7 +1382,9 @@ export const Overview: React.FC = () => {
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle className="gradient-text">Weekly Planning & Today's Focus</CardTitle>
-            <p className="subtitle-text mt-1">Manage your tasks across the week</p>
+            <CardDescription>
+              Manage your tasks across the week
+            </CardDescription>
           </div>
           <Link to="/productivity">
             <Button size="sm" className="modern-button">
@@ -1269,6 +1517,9 @@ export const Overview: React.FC = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Jobs Dashboard */}
+      <JobsDashboard />
 
       {/* Quick Actions */}
       <Card className="glass-card">
