@@ -83,191 +83,7 @@ interface CurrentTrackData {
   device: any
 }
 
-// Focus Timer Widget Component
-const FocusTimerWidget: React.FC = () => {
-  const [timeLeft, setTimeLeft] = useState(25 * 60) // 25 minutes in seconds
-  const [isRunning, setIsRunning] = useState(false)
-  const [sessionType, setSessionType] = useState<'work' | 'break'>('work')
-  const [sessionsToday, setSessionsToday] = useState(0)
-  const intervalRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Load sessions from localStorage
-  useEffect(() => {
-    const savedSessions = localStorage.getItem('pomodoroSessions')
-    if (savedSessions) {
-      const sessions = JSON.parse(savedSessions)
-      const todayStr = new Date().toDateString()
-      const todaySessions = sessions.filter((session: any) => 
-        new Date(session.startTime).toDateString() === todayStr && 
-        session.type === 'work'
-      )
-      setSessionsToday(todaySessions.length)
-    }
-  }, [])
-
-  // Timer logic
-  useEffect(() => {
-    if (isRunning && timeLeft > 0) {
-      intervalRef.current = setInterval(() => {
-        setTimeLeft(prev => prev - 1)
-      }, 1000)
-    } else {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
-        intervalRef.current = null
-      }
-    }
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
-      }
-    }
-  }, [isRunning, timeLeft])
-
-  // Handle session completion
-  useEffect(() => {
-    if (timeLeft === 0 && isRunning) {
-      setIsRunning(false)
-      
-      // Save completed session
-      const completedSession = {
-        id: `session-${Date.now()}`,
-        type: sessionType,
-        duration: sessionType === 'work' ? 25 : 5,
-        completed: true,
-        startTime: new Date(Date.now() - (sessionType === 'work' ? 25 : 5) * 60 * 1000),
-        endTime: new Date()
-      }
-
-      const savedSessions = JSON.parse(localStorage.getItem('pomodoroSessions') || '[]')
-      localStorage.setItem('pomodoroSessions', JSON.stringify([completedSession, ...savedSessions]))
-      
-      if (sessionType === 'work') {
-        setSessionsToday(prev => prev + 1)
-        setSessionType('break')
-        setTimeLeft(5 * 60) // 5 minute break
-      } else {
-        setSessionType('work')
-        setTimeLeft(25 * 60) // 25 minute work session
-      }
-
-      // Browser notification
-      if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification('Focus Timer', {
-          body: sessionType === 'work' ? 'Work session complete! Time for a break.' : 'Break complete! Ready to focus?',
-          icon: '/favicon.ico'
-        })
-      }
-    }
-  }, [timeLeft, isRunning, sessionType])
-
-  const formatTime = (seconds: number): string => {
-    const mins = Math.floor(seconds / 60)
-    const secs = seconds % 60
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
-  }
-
-  const handleStart = () => {
-    setIsRunning(true)
-    // Request notification permission
-    if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission()
-    }
-  }
-
-  const handlePause = () => {
-    setIsRunning(false)
-  }
-
-  const handleReset = () => {
-    setIsRunning(false)
-    setSessionType('work')
-    setTimeLeft(25 * 60)
-  }
-
-  const progress = sessionType === 'work' 
-    ? ((25 * 60 - timeLeft) / (25 * 60)) * 100
-    : ((5 * 60 - timeLeft) / (5 * 60)) * 100
-
-  return (
-    <Card className="glass-card">
-      <CardHeader>
-        <CardTitle className="gradient-text flex items-center gap-2">
-          <Brain className="w-5 h-5" />
-          Focus Timer
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Session Type Indicator */}
-        <div className="text-center">
-          <Badge variant={sessionType === 'work' ? 'default' : 'secondary'} className="mb-2">
-            {sessionType === 'work' ? 'Work Session' : 'Break Time'}
-          </Badge>
-        </div>
-
-        {/* Circular Progress */}
-        <div className="relative flex items-center justify-center">
-          <svg className="w-32 h-32 transform -rotate-90" viewBox="0 0 120 120">
-            {/* Background circle */}
-            <circle
-              cx="60"
-              cy="60"
-              r="50"
-              stroke="currentColor"
-              strokeWidth="8"
-              fill="none"
-              className="text-slate-200 dark:text-slate-700"
-            />
-            {/* Progress circle */}
-            <circle
-              cx="60"
-              cy="60"
-              r="50"
-              stroke={sessionType === 'work' ? 'rgb(59, 130, 246)' : 'rgb(16, 185, 129)'}
-              strokeWidth="8"
-              fill="none"
-              strokeDasharray={`${2 * Math.PI * 50}`}
-              strokeDashoffset={`${2 * Math.PI * 50 * (1 - progress / 100)}`}
-              className="transition-all duration-1000"
-            />
-          </svg>
-          
-          {/* Timer display */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <div className="text-2xl font-bold text-slate-900 dark:text-white">
-              {formatTime(timeLeft)}
-            </div>
-            <div className="text-xs text-slate-500 dark:text-slate-400">
-              {isRunning ? 'Running' : 'Paused'}
-            </div>
-          </div>
-        </div>
-
-        {/* Controls */}
-        <div className="flex items-center justify-center space-x-2">
-          <Button
-            onClick={isRunning ? handlePause : handleStart}
-            className={sessionType === 'work' ? 'bg-blue-500 hover:bg-blue-600' : 'bg-emerald-500 hover:bg-emerald-600'}
-          >
-            {isRunning ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-          </Button>
-          
-          <Button variant="outline" onClick={handleReset}>
-            <RotateCcw className="w-4 h-4" />
-          </Button>
-        </div>
-
-        {/* Sessions Today */}
-        <div className="text-center pt-2">
-          <div className="text-sm text-slate-600 dark:text-slate-300">
-            Sessions Today: <span className="font-semibold">{sessionsToday}</span>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
 
 // GitHub contribution chart component
 const GitHubContributionChart: React.FC<{ contributionData?: any }> = ({ contributionData }) => {
@@ -1706,6 +1522,30 @@ export const Overview: React.FC = () => {
   const closeAddDialog = () => {
     setShowAddDialog(false)
     resetForm()
+  }
+
+  const toggleTask = (taskId: string) => {
+    const updatedTasks = todayTasks.map(task => 
+      task.id === taskId ? { ...task, completed: !task.completed } : task
+    )
+    setTodayTasks(updatedTasks)
+    
+    // Save to localStorage
+    const savedTasks = localStorage.getItem('weeklyTodos')
+    if (savedTasks) {
+      const weeklyData = JSON.parse(savedTasks)
+      weeklyData[selectedDay] = updatedTasks
+      localStorage.setItem('weeklyTodos', JSON.stringify(weeklyData))
+    }
+  }
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'high': return 'border-red-200 text-red-700 bg-red-50 dark:border-red-800 dark:text-red-300 dark:bg-red-950/30'
+      case 'medium': return 'border-amber-200 text-amber-700 bg-amber-50 dark:border-amber-800 dark:text-amber-300 dark:bg-amber-950/30'
+      case 'low': return 'border-green-200 text-green-700 bg-green-50 dark:border-green-800 dark:text-green-300 dark:bg-green-950/30'
+      default: return 'border-slate-200 text-slate-700 bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:bg-slate-800'
+    }
   }
 
   const priorityColors = {
