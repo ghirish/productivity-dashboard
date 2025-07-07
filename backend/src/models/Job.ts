@@ -98,7 +98,18 @@ const jobSchema = new Schema<IJob>({
     default: true
   }
 }, {
-  timestamps: true
+  timestamps: true,
+  toJSON: {
+    transform: function(doc, ret) {
+      // Ensure all dates are in ISO format
+      if (ret.postedDate) ret.postedDate = ret.postedDate.toISOString()
+      if (ret.scrapedAt) ret.scrapedAt = ret.scrapedAt.toISOString()
+      if (ret.appliedAt) ret.appliedAt = ret.appliedAt.toISOString()
+      if (ret.createdAt) ret.createdAt = ret.createdAt.toISOString()
+      if (ret.updatedAt) ret.updatedAt = ret.updatedAt.toISOString()
+      return ret
+    }
+  }
 })
 
 // Index for efficient querying

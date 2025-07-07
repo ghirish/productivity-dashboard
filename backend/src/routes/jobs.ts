@@ -299,11 +299,23 @@ router.get('/stats', async (req, res) => {
     const cutoffDate = new Date()
     cutoffDate.setDate(cutoffDate.getDate() - parseInt(days as string))
 
+    // Get today's date for new jobs calculation
+    const todayStart = new Date()
+    todayStart.setHours(0, 0, 0, 0)
+    const todayEnd = new Date()
+    todayEnd.setHours(23, 59, 59, 999)
+
     // Get overall stats
     const totalJobs = await Job.countDocuments({ isActive: true })
     const recentJobs = await Job.countDocuments({ 
       isActive: true, 
       postedDate: { $gte: cutoffDate } 
+    })
+
+    // Get today's new jobs (jobs posted today)
+    const newJobsToday = await Job.countDocuments({
+      isActive: true,
+      postedDate: { $gte: todayStart, $lte: todayEnd }
     })
 
     // Status distribution
@@ -355,17 +367,22 @@ router.get('/stats', async (req, res) => {
       { $sort: { _id: 1 } }
     ])
 
+    // Prepare status distribution object
+    const byStatus = statusStats.reduce((acc, stat) => {
+      acc[stat._id] = stat.count
+      return acc
+    }, {} as any)
+
+    // Add today's new jobs to the status breakdown
+    byStatus.newToday = newJobsToday
+
     const stats = {
-      overview: {
-        totalJobs,
-        recentJobs: recentJobs,
-        daysRange: parseInt(days as string)
-      },
-      statusDistribution: statusStats.reduce((acc, stat) => {
-        acc[stat._id] = stat.count
-        return acc
-      }, {} as any),
-      sourceDistribution: sourceStats.reduce((acc, stat) => {
+      totalJobs,
+      recentJobs: recentJobs,
+      newJobsToday,
+      daysRange: parseInt(days as string),
+      byStatus,
+      bySource: sourceStats.reduce((acc, stat) => {
         acc[stat._id] = stat.count
         return acc
       }, {} as any),

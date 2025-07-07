@@ -680,57 +680,76 @@ const JobsDashboard: React.FC = () => {
 
   const API_BASE = process.env.REACT_APP_API_URL || 'http://127.0.0.1:3002'
 
-  const fetchJobs = async () => {
+  const fetchJobs = useCallback(async () => {
     try {
       setLoading(true)
-      const queryParams = new URLSearchParams({
-        days: filters.days,
-        ...(filters.status !== 'all' && { status: filters.status }),
-        ...(filters.company && { company: filters.company }),
-        ...(filters.location && { location: filters.location })
-      })
+      setError(null)
+      
+      const queryParams = new URLSearchParams()
+      queryParams.append('days', filters.days)
+      
+      if (filters.status && filters.status !== 'all') {
+        queryParams.append('status', filters.status)
+      }
+      if (filters.company && filters.company.trim()) {
+        queryParams.append('company', filters.company.trim())
+      }
+      if (filters.location && filters.location.trim()) {
+        queryParams.append('location', filters.location.trim())
+      }
 
-      // Fetch jobs and statistics
-      const [jobsResponse, statsResponse] = await Promise.all([
-        fetch(`${API_BASE}/api/jobs?${queryParams}`),
+      // Fetch jobs and statistics in parallel
+      const [jobsResponse, statsResponse] = await Promise.allSettled([
+        fetch(`${API_BASE}/api/jobs?${queryParams.toString()}`),
         fetch(`${API_BASE}/api/jobs/stats`)
       ])
 
-      if (!jobsResponse.ok) {
+      // Handle jobs response
+      if (jobsResponse.status === 'fulfilled' && jobsResponse.value.ok) {
+        const jobsData = await jobsResponse.value.json()
+        setJobs(Array.isArray(jobsData.jobs) ? jobsData.jobs : [])
+      } else {
         throw new Error('Failed to fetch jobs')
       }
 
-      const jobsData = await jobsResponse.json()
-      setJobs(jobsData.jobs || [])
-
-      if (statsResponse.ok) {
-        const statsData = await statsResponse.json()
+      // Handle stats response
+      if (statsResponse.status === 'fulfilled' && statsResponse.value.ok) {
+        const statsData = await statsResponse.value.json()
+        const byStatus = statsData.byStatus || {}
         setJobStats({
-          totalJobs: statsData.totalJobs || 0,
-          newJobs: statsData.byStatus?.new || 0,
-          appliedJobs: (statsData.byStatus?.applied || 0) + (statsData.byStatus?.interview || 0) + (statsData.byStatus?.offer || 0),
-          remainingJobs: (statsData.byStatus?.new || 0) + (statsData.byStatus?.interested || 0)
+          totalJobs: Number(statsData.totalJobs) || 0,
+          newJobs: Number(statsData.newJobsToday) || 0,
+          appliedJobs: (Number(byStatus.applied) || 0) + (Number(byStatus.interview) || 0) + (Number(byStatus.offer) || 0),
+          remainingJobs: (Number(byStatus.new) || 0) + (Number(byStatus.interested) || 0)
         })
       }
     } catch (err: any) {
-      setError(err.message)
+      console.error('Failed to fetch jobs:', err)
+      setError(err.message || 'Failed to load jobs')
     } finally {
       setLoading(false)
     }
-  }
+  }, [API_BASE, filters.days, filters.status, filters.company, filters.location])
 
   const triggerScrape = async () => {
     try {
-      await fetch(`${API_BASE}/api/jobs/scrape`, { method: 'POST' })
-      await fetchJobs()
+      const response = await fetch(`${API_BASE}/api/jobs/scrape`, { method: 'POST' })
+      if (response.ok) {
+        await fetchJobs()
+      }
     } catch (err: any) {
       console.error('Scrape failed:', err)
     }
   }
 
+  // Debounced effect to prevent rapid API calls
   useEffect(() => {
-    fetchJobs()
-  }, [filters])
+    const timeoutId = setTimeout(() => {
+      fetchJobs()
+    }, 300) // 300ms debounce
+
+    return () => clearTimeout(timeoutId)
+  }, [fetchJobs])
 
   const filteredJobs = jobs.slice(0, 6) // Show only 6 most recent jobs
 
@@ -746,15 +765,46 @@ const JobsDashboard: React.FC = () => {
     }
   }
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    const now = new Date()
-    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60))
-    
-    if (diffInHours < 1) return 'Just now'
-    if (diffInHours < 24) return `${diffInHours}h ago`
-    if (diffInHours < 48) return 'Yesterday'
-    return date.toLocaleDateString()
+  const formatDate = (dateInput: any) => {
+    try {
+      if (!dateInput) return 'Unknown date'
+      
+      // Handle different input types
+      let date: Date
+      if (dateInput instanceof Date) {
+        date = dateInput
+      } else if (typeof dateInput === 'string') {
+        // Try to parse the date string
+        date = new Date(dateInput)
+      } else {
+        return 'Invalid date'
+      }
+
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        return 'Invalid date'
+      }
+
+      const now = new Date()
+      const diffInMilliseconds = now.getTime() - date.getTime()
+      const diffInHours = Math.floor(diffInMilliseconds / (1000 * 60 * 60))
+      const diffInDays = Math.floor(diffInHours / 24)
+      
+      if (diffInHours < 1) return 'Just now'
+      if (diffInHours < 24) return `${diffInHours}h ago`
+      if (diffInDays === 1) return 'Yesterday'
+      if (diffInDays < 7) return `${diffInDays} days ago`
+      
+      // For older dates, show in a consistent format
+      return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+      })
+    } catch (error) {
+      console.error('Date formatting error:', error)
+      return 'Invalid date'
+    }
   }
 
   return (
@@ -1549,79 +1599,15 @@ export const Overview: React.FC = () => {
       </div>
 
       {/* Main Grid Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* Condensed Stats Square */}
-        <Card className="glass-card">
-          <CardHeader>
-            <CardTitle className="gradient-text">Today's Stats</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4">
-              {/* LeetCode Streak */}
-              <div className="text-center p-4 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
-                <BookOpen className="w-6 h-6 text-slate-600 dark:text-slate-400 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-slate-900 dark:text-white">
-                  {leetCodeStreak}
-                </div>
-                <div className="text-xs text-slate-600 dark:text-slate-400">
-                  LeetCode Streak
-                </div>
-                <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  days
-                </div>
-              </div>
-
-              {/* Problems Solved */}
-              <div className="text-center p-4 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
-                <Target className="w-6 h-6 text-slate-600 dark:text-slate-400 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-slate-900 dark:text-white">
-                  {problemsSolved}
-                </div>
-                <div className="text-xs text-slate-600 dark:text-slate-400">
-                  Problems Solved
-                </div>
-                <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  total
-                </div>
-              </div>
-
-              {/* Focus Sessions */}
-              <div className="text-center p-4 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
-                <Brain className="w-6 h-6 text-slate-600 dark:text-slate-400 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-slate-900 dark:text-white">
-                  {pomodoroSessionsToday}
-                </div>
-                <div className="text-xs text-slate-600 dark:text-slate-400">
-                  Focus Sessions
-                </div>
-                <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  today
-                </div>
-              </div>
-
-              {/* Tasks Done */}
-              <div className="text-center p-4 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
-                <CheckCircle className="w-6 h-6 text-slate-600 dark:text-slate-400 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-slate-900 dark:text-white">
-                  {completedToday}
-                </div>
-                <div className="text-xs text-slate-600 dark:text-slate-400">
-                  Tasks Done
-                </div>
-                <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  of {todayTasks.length}
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Focus Timer Widget */}
-        <FocusTimerDashboard />
+        {/* Focus Timer Widget - Full Width */}
+        <div className="lg:col-span-2">
+          <FocusTimerDashboard />
+        </div>
 
         {/* Large Square Spotify Player */}
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-1">
           <div className="mb-4">
             <h3 className="text-lg font-semibold gradient-text">Now Playing</h3>
           </div>
