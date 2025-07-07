@@ -190,50 +190,24 @@ const GitHubContributionChart: React.FC<{ contributionData?: any }> = ({ contrib
 
         {/* Contribution grid */}
         <div className="overflow-x-auto">
-          <div className="flex">
-            {/* Day labels */}
-            <div className="flex flex-col gap-0.5 mr-2 text-xs text-slate-500 dark:text-slate-400 pt-2">
-              <div style={{ height: '10px' }}></div>
-              <div>Mon</div>
-              <div style={{ height: '10px' }}></div>
-              <div>Wed</div>
-              <div style={{ height: '10px' }}></div>
-              <div>Fri</div>
-              <div style={{ height: '10px' }}></div>
-            </div>
-            {/* Grid */}
-            <div className="flex gap-0.5 min-w-fit">
-              {weeks.map((week, weekIndex) => (
-                <div key={weekIndex} className="flex flex-col gap-0.5">
-                  {Array.from({ length: 7 }).map((_, dayIndex) => {
-                    const contribution = week[dayIndex]
-                    return (
-                      <div
-                        key={`${weekIndex}-${dayIndex}`}
-                        className={`w-2.5 h-2.5 rounded-sm cursor-pointer transition-all hover:scale-125 ${
-                          contribution ? getContributionColor(contribution.count) : 'bg-slate-100 dark:bg-slate-800'
-                        }`}
-                        onMouseEnter={contribution ? (e) => handleMouseEnter(contribution, e) : undefined}
-                        onMouseLeave={handleMouseLeave}
-                      />
-                    )
-                  })}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Month labels */}
-        <div className="flex">
-          <div className="w-8 mr-2"></div> {/* Spacer to align with grid */}
-          <div className="flex-1 flex justify-between text-xs text-slate-500 dark:text-slate-400">
-            <span>Jan</span>
-            <span>Mar</span>
-            <span>May</span>
-            <span>Jul</span>
-            <span>Sep</span>
-            <span>Nov</span>
+          <div className="flex gap-0.5 min-w-fit">
+            {weeks.map((week, weekIndex) => (
+              <div key={weekIndex} className="flex flex-col gap-0.5">
+                {Array.from({ length: 7 }).map((_, dayIndex) => {
+                  const contribution = week[dayIndex]
+                  return (
+                    <div
+                      key={`${weekIndex}-${dayIndex}`}
+                      className={`w-2.5 h-2.5 rounded-sm cursor-pointer transition-all hover:scale-125 ${
+                        contribution ? getContributionColor(contribution.count) : 'bg-slate-100 dark:bg-slate-800'
+                      }`}
+                      onMouseEnter={contribution ? (e) => handleMouseEnter(contribution, e) : undefined}
+                      onMouseLeave={handleMouseLeave}
+                    />
+                  )
+                })}
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -817,32 +791,32 @@ const JobsDashboard: React.FC = () => {
         
         {/* Job Statistics */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-          <div className="text-center p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
-            <div className="text-xl font-bold text-blue-700 dark:text-blue-300">
+          <div className="text-center p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+            <div className="text-xl font-bold text-slate-900 dark:text-white">
               {jobStats.totalJobs}
             </div>
-            <div className="text-xs text-blue-600 dark:text-blue-400">
+            <div className="text-xs text-slate-600 dark:text-slate-400">
               Total Jobs
             </div>
           </div>
-          <div className="text-center p-3 bg-yellow-50 dark:bg-yellow-950/30 rounded-lg">
-            <div className="text-xl font-bold text-yellow-700 dark:text-yellow-300">
+          <div className="text-center p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+            <div className="text-xl font-bold text-slate-900 dark:text-white">
               {jobStats.remainingJobs}
             </div>
-            <div className="text-xs text-yellow-600 dark:text-yellow-400">
+            <div className="text-xs text-slate-600 dark:text-slate-400">
               To Review
             </div>
           </div>
-          <div className="text-center p-3 bg-green-50 dark:bg-green-950/30 rounded-lg">
-            <div className="text-xl font-bold text-green-700 dark:text-green-300">
+          <div className="text-center p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+            <div className="text-xl font-bold text-slate-900 dark:text-white">
               {jobStats.appliedJobs}
             </div>
-            <div className="text-xs text-green-600 dark:text-green-400">
+            <div className="text-xs text-slate-600 dark:text-slate-400">
               Applied
             </div>
           </div>
-          <div className="text-center p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
-            <div className="text-xl font-bold text-slate-700 dark:text-slate-300">
+          <div className="text-center p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+            <div className="text-xl font-bold text-slate-900 dark:text-white">
               {jobStats.newJobs}
             </div>
             <div className="text-xs text-slate-600 dark:text-slate-400">
@@ -1155,72 +1129,75 @@ const FocusTimerDashboard: React.FC = () => {
             </Link>
           </div>
         </div>
-
+      </CardHeader>
+      <CardContent className="space-y-6">
         {/* Session Statistics */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-          <div className="text-center p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
-            <div className="text-xl font-bold text-blue-700 dark:text-blue-300">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="text-center p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+            <div className="text-lg font-bold text-slate-900 dark:text-white">
               {completedSessions}
             </div>
-            <div className="text-xs text-blue-600 dark:text-blue-400">
+            <div className="text-xs text-slate-600 dark:text-slate-400">
               Sessions Today
             </div>
           </div>
-          <div className="text-center p-3 bg-purple-50 dark:bg-purple-950/30 rounded-lg">
-            <div className="text-xl font-bold text-purple-700 dark:text-purple-300">
+          <div className="text-center p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+            <div className="text-lg font-bold text-slate-900 dark:text-white">
               {workSessionsCompleted}
             </div>
-            <div className="text-xs text-purple-600 dark:text-purple-400">
+            <div className="text-xs text-slate-600 dark:text-slate-400">
               Focus Sessions
             </div>
           </div>
-          <div className="text-center p-3 bg-emerald-50 dark:bg-emerald-950/30 rounded-lg">
-            <div className="text-xl font-bold text-emerald-700 dark:text-emerald-300">
+          <div className="text-center p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+            <div className="text-lg font-bold text-slate-900 dark:text-white">
               {Math.floor((workSessionsCompleted * 25) / 60)}h {(workSessionsCompleted * 25) % 60}m
             </div>
-            <div className="text-xs text-emerald-600 dark:text-emerald-400">
+            <div className="text-xs text-slate-600 dark:text-slate-400">
               Focus Time
             </div>
           </div>
-          <div className="text-center p-3 bg-orange-50 dark:bg-orange-950/30 rounded-lg">
-            <div className="text-xl font-bold text-orange-700 dark:text-orange-300">
+          <div className="text-center p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+            <div className="text-lg font-bold text-slate-900 dark:text-white">
               {workSessionsCompleted > 0 ? Math.floor(workSessionsCompleted / 4) : 0}
             </div>
-            <div className="text-xs text-orange-600 dark:text-orange-400">
+            <div className="text-xs text-slate-600 dark:text-slate-400">
               Pomodoro Cycles
             </div>
           </div>
         </div>
-      </CardHeader>
-      <CardContent>
+
         {/* Session Type Selector */}
-        <div className="flex justify-center gap-2 mb-6">
-          {Object.entries(sessionConfigs).map(([type, conf]) => (
-            <button
-              key={type}
-              onClick={() => switchSession(type as any)}
-              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                currentSession === type
-                  ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
-              }`}
-            >
-              {conf.label}
-            </button>
-          ))}
+        <div className="flex justify-center">
+          <div className="inline-flex rounded-lg bg-slate-100 dark:bg-slate-800 p-1">
+            {Object.entries(sessionConfigs).map(([type, conf]) => (
+              <button
+                key={type}
+                onClick={() => switchSession(type as any)}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  currentSession === type
+                    ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
+                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                {conf.label}
+              </button>
+            ))}
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Timer and Controls Section */}
+        <div className="flex flex-col items-center space-y-6">
           {/* Timer Display */}
-          <div className="text-center">
-            <div className="relative w-40 h-40 mx-auto mb-4">
+          <div className="relative">
+            <div className="relative w-48 h-48">
               <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
                 <circle
                   cx="50"
                   cy="50"
                   r="40"
                   stroke="currentColor"
-                  strokeWidth="6"
+                  strokeWidth="4"
                   fill="none"
                   className="text-slate-200 dark:text-slate-700"
                 />
@@ -1229,7 +1206,7 @@ const FocusTimerDashboard: React.FC = () => {
                   cy="50"
                   r="40"
                   stroke="currentColor"
-                  strokeWidth="6"
+                  strokeWidth="4"
                   fill="none"
                   strokeDasharray={`${2 * Math.PI * 40}`}
                   strokeDashoffset={`${2 * Math.PI * 40 * (1 - progress / 100)}`}
@@ -1238,82 +1215,77 @@ const FocusTimerDashboard: React.FC = () => {
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <Icon className={`w-6 h-6 ${config.color} mb-1`} />
-                <div className="text-2xl font-bold text-slate-900 dark:text-white">
+                <Icon className={`w-8 h-8 ${config.color} mb-2`} />
+                <div className="text-3xl font-bold text-slate-900 dark:text-white">
                   {formatTime(timeLeft)}
                 </div>
-                <div className="text-xs text-slate-500 dark:text-slate-400">
+                <div className="text-sm text-slate-500 dark:text-slate-400">
                   {isRunning ? 'Running' : 'Paused'}
                 </div>
               </div>
             </div>
-
-            {/* Controls */}
-            <div className="flex justify-center gap-3">
-              <Button
-                onClick={isRunning ? handlePause : handleStart}
-                className="modern-button"
-              >
-                {isRunning ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-              </Button>
-              <Button
-                onClick={handleReset}
-                variant="outline"
-                className="border-slate-300 dark:border-slate-600"
-              >
-                <RotateCcw className="w-4 h-4" />
-              </Button>
-            </div>
           </div>
 
-          {/* Recent Sessions */}
+          {/* Controls */}
+          <div className="flex items-center gap-4">
+            <Button
+              onClick={isRunning ? handlePause : handleStart}
+              size="lg"
+              className="px-8 py-3 text-lg modern-button"
+            >
+              {isRunning ? <Pause className="w-5 h-5 mr-2" /> : <Play className="w-5 h-5 mr-2" />}
+              {isRunning ? 'Pause' : 'Start'}
+            </Button>
+            <Button
+              onClick={handleReset}
+              variant="outline"
+              size="lg"
+              className="px-8 py-3 text-lg border-slate-300 dark:border-slate-600"
+            >
+              <RotateCcw className="w-5 h-5 mr-2" />
+              Reset
+            </Button>
+          </div>
+        </div>
+
+        {/* Recent Sessions */}
+        {sessionHistory.length > 0 && (
           <div>
             <h3 className="font-semibold text-slate-700 dark:text-slate-200 mb-3">
               Recent Sessions
             </h3>
-            <div className="space-y-2 max-h-48 overflow-y-auto">
-              {sessionHistory.length === 0 ? (
-                <div className="text-center py-8 text-slate-500">
-                  No sessions completed yet
-                </div>
-              ) : (
-                sessionHistory.map((session, index) => {
-                  const sessionConfig = sessionConfigs[session.type as keyof typeof sessionConfigs]
-                  const SessionIcon = sessionConfig?.icon || Clock
-                  return (
-                    <div
-                      key={session.id || index}
-                      className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-800 rounded-lg"
-                    >
-                      <div className="flex items-center gap-2">
-                        <SessionIcon className={`w-4 h-4 ${sessionConfig?.color || 'text-slate-500'}`} />
-                        <div>
-                          <div className="text-sm font-medium text-slate-900 dark:text-white">
-                            {sessionConfig?.label || 'Session'}
-                          </div>
-                          <div className="text-xs text-slate-500 dark:text-slate-400">
-                            {session.duration} min
-                          </div>
+            <div className="space-y-2 max-h-32 overflow-y-auto">
+              {sessionHistory.slice(0, 3).map((session, index) => {
+                const sessionConfig = sessionConfigs[session.type as keyof typeof sessionConfigs]
+                const SessionIcon = sessionConfig?.icon || Clock
+                return (
+                  <div
+                    key={session.id || index}
+                    className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700"
+                  >
+                    <div className="flex items-center gap-2">
+                      <SessionIcon className="w-4 h-4 text-slate-600 dark:text-slate-400" />
+                      <div>
+                        <div className="text-sm font-medium text-slate-900 dark:text-white">
+                          {sessionConfig?.label || 'Session'}
                         </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                          {new Date(session.startTime).toLocaleTimeString([], { 
-                            hour: '2-digit', 
-                            minute: '2-digit' 
-                          })}
+                        <div className="text-xs text-slate-500 dark:text-slate-400">
+                          {session.duration} min
                         </div>
-                        <Badge variant="outline" className="text-xs">
-                          Completed
-                        </Badge>
                       </div>
                     </div>
-                  )
-                })
-              )}
+                    <div className="text-xs text-slate-500 dark:text-slate-400">
+                      {new Date(session.startTime).toLocaleTimeString([], { 
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                      })}
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           </div>
-        </div>
+        )}
       </CardContent>
 
       {/* History Dialog */}
@@ -1338,7 +1310,7 @@ const FocusTimerDashboard: React.FC = () => {
                     className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-lg"
                   >
                     <div className="flex items-center gap-3">
-                      <SessionIcon className={`w-5 h-5 ${sessionConfig?.color || 'text-slate-500'}`} />
+                      <SessionIcon className="w-5 h-5 text-slate-600 dark:text-slate-400" />
                       <div>
                         <div className="font-medium text-slate-900 dark:text-white">
                           {sessionConfig?.label || 'Session'}
@@ -1587,12 +1559,12 @@ export const Overview: React.FC = () => {
           <CardContent>
             <div className="grid grid-cols-2 gap-4">
               {/* LeetCode Streak */}
-              <div className="text-center p-4 bg-emerald-50 dark:bg-emerald-950/30 rounded-lg">
-                <BookOpen className="w-6 h-6 text-emerald-600 dark:text-emerald-400 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">
+              <div className="text-center p-4 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+                <BookOpen className="w-6 h-6 text-slate-600 dark:text-slate-400 mx-auto mb-2" />
+                <div className="text-2xl font-bold text-slate-900 dark:text-white">
                   {leetCodeStreak}
                 </div>
-                <div className="text-xs text-emerald-600 dark:text-emerald-400">
+                <div className="text-xs text-slate-600 dark:text-slate-400">
                   LeetCode Streak
                 </div>
                 <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
@@ -1601,12 +1573,12 @@ export const Overview: React.FC = () => {
               </div>
 
               {/* Problems Solved */}
-              <div className="text-center p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
-                <Target className="w-6 h-6 text-blue-600 dark:text-blue-400 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-blue-700 dark:text-blue-300">
+              <div className="text-center p-4 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+                <Target className="w-6 h-6 text-slate-600 dark:text-slate-400 mx-auto mb-2" />
+                <div className="text-2xl font-bold text-slate-900 dark:text-white">
                   {problemsSolved}
                 </div>
-                <div className="text-xs text-blue-600 dark:text-blue-400">
+                <div className="text-xs text-slate-600 dark:text-slate-400">
                   Problems Solved
                 </div>
                 <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
@@ -1615,12 +1587,12 @@ export const Overview: React.FC = () => {
               </div>
 
               {/* Focus Sessions */}
-              <div className="text-center p-4 bg-purple-50 dark:bg-purple-950/30 rounded-lg">
-                <Brain className="w-6 h-6 text-purple-600 dark:text-purple-400 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-purple-700 dark:text-purple-300">
+              <div className="text-center p-4 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+                <Brain className="w-6 h-6 text-slate-600 dark:text-slate-400 mx-auto mb-2" />
+                <div className="text-2xl font-bold text-slate-900 dark:text-white">
                   {pomodoroSessionsToday}
                 </div>
-                <div className="text-xs text-purple-600 dark:text-purple-400">
+                <div className="text-xs text-slate-600 dark:text-slate-400">
                   Focus Sessions
                 </div>
                 <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
@@ -1629,12 +1601,12 @@ export const Overview: React.FC = () => {
               </div>
 
               {/* Tasks Done */}
-              <div className="text-center p-4 bg-orange-50 dark:bg-orange-950/30 rounded-lg">
-                <CheckCircle className="w-6 h-6 text-orange-600 dark:text-orange-400 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-orange-700 dark:text-orange-300">
+              <div className="text-center p-4 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+                <CheckCircle className="w-6 h-6 text-slate-600 dark:text-slate-400 mx-auto mb-2" />
+                <div className="text-2xl font-bold text-slate-900 dark:text-white">
                   {completedToday}
                 </div>
-                <div className="text-xs text-orange-600 dark:text-orange-400">
+                <div className="text-xs text-slate-600 dark:text-slate-400">
                   Tasks Done
                 </div>
                 <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">

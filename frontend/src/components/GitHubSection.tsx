@@ -367,18 +367,9 @@ export const GitHubSection: React.FC = () => {
           <CardContent>
             {contributions?.contributionData ? (
               <div className="space-y-4">
-                {/* Day labels */}
-                <div className="flex">
-                  <div className="w-8 flex flex-col gap-1 text-xs text-slate-500 dark:text-slate-400">
-                    <div className="h-3"></div>
-                    <div className="h-3 flex items-center">Mon</div>
-                    <div className="h-3"></div>
-                    <div className="h-3 flex items-center">Wed</div>
-                    <div className="h-3"></div>
-                    <div className="h-3 flex items-center">Fri</div>
-                    <div className="h-3"></div>
-                  </div>
-                  <div className="flex-1 flex gap-1 overflow-x-auto">
+                {/* Contribution grid */}
+                <div className="overflow-x-auto">
+                  <div className="flex-1 flex gap-1">
                     {Array.from({ length: 53 }).map((_, weekIndex) => (
                       <div key={weekIndex} className="flex flex-col gap-1">
                         {Array.from({ length: 7 }).map((_, dayIndex) => {
@@ -399,22 +390,6 @@ export const GitHubSection: React.FC = () => {
                         })}
                       </div>
                     ))}
-                  </div>
-                </div>
-                
-                {/* Month labels */}
-                <div className="flex">
-                  <div className="w-8"></div> {/* Spacer for alignment */}
-                  <div className="flex-1 flex gap-1 overflow-x-auto">
-                    {/* Add spacers for each month */}
-                    <div className="flex w-full justify-between text-xs text-slate-500 dark:text-slate-400">
-                      <div className="flex-1 text-left">Jan</div>
-                      <div className="flex-1 text-center">Mar</div>
-                      <div className="flex-1 text-center">May</div>
-                      <div className="flex-1 text-center">Jul</div>
-                      <div className="flex-1 text-center">Sep</div>
-                      <div className="flex-1 text-right">Nov</div>
-                    </div>
                   </div>
                 </div>
                 
