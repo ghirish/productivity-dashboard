@@ -6,7 +6,7 @@ export interface IJob extends Document {
   location: string
   salary?: string
   applicationUrl: string
-  source: 'summer2026-internships' | '2025-swe-college-jobs'
+  source: 'summer2026-internships' | '2025-swe-college-jobs' | '2026-ai-college-jobs' | '2025-data-analysis-internship' | '2025-product-management-internship'
   sourceUrl: string
   postedDate: Date
   ageText: string // Original age text from source (e.g., "2d", "Jul 01")
@@ -52,7 +52,7 @@ const jobSchema = new Schema<IJob>({
   },
   source: {
     type: String,
-    enum: ['summer2026-internships', '2025-swe-college-jobs'],
+    enum: ['summer2026-internships', '2025-swe-college-jobs', '2026-ai-college-jobs', '2025-data-analysis-internship', '2025-product-management-internship'],
     required: true
   },
   sourceUrl: {

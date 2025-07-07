@@ -16,18 +16,33 @@ export class JobScraper {
   private readonly SOURCES = {
     SUMMER2026: {
       name: 'summer2026-internships' as const,
-      url: 'https://github.com/vanshb03/Summer2026-Internships/blob/dev/OFFSEASON_README.md',
-      rawUrl: 'https://raw.githubusercontent.com/vanshb03/Summer2026-Internships/dev/OFFSEASON_README.md'
+      url: 'https://github.com/vanshb03/Summer2026-Internships/tree/dev?tab=readme-ov-file',
+      rawUrl: 'https://raw.githubusercontent.com/vanshb03/Summer2026-Internships/dev/README.md'
     },
     SWE2025: {
       name: '2025-swe-college-jobs' as const,
       url: 'https://github.com/speedyapply/2025-SWE-College-Jobs/blob/main/README.md',
       rawUrl: 'https://raw.githubusercontent.com/speedyapply/2025-SWE-College-Jobs/main/README.md'
+    },
+    AI2026: {
+      name: '2026-ai-college-jobs' as const,
+      url: 'https://github.com/speedyapply/2026-AI-College-Jobs',
+      rawUrl: 'https://raw.githubusercontent.com/speedyapply/2026-AI-College-Jobs/main/README.md'
+    },
+    DATA2025: {
+      name: '2025-data-analysis-internship' as const,
+      url: 'https://github.com/jobright-ai/2025-Data-Analysis-Internship?tab=readme-ov-file',
+      rawUrl: 'https://raw.githubusercontent.com/jobright-ai/2025-Data-Analysis-Internship/main/README.md'
+    },
+    PRODUCT2025: {
+      name: '2025-product-management-internship' as const,
+      url: 'https://github.com/jobright-ai/2025-Product-Management-Internship',
+      rawUrl: 'https://raw.githubusercontent.com/jobright-ai/2025-Product-Management-Internship/main/README.md'
     }
   }
 
   /**
-   * Main scraping function that orchestrates scraping from both sources
+   * Main scraping function that orchestrates scraping from all sources
    */
   async scrapeAllJobs(): Promise<{ newJobs: number; totalJobs: number; errors: string[] }> {
     const results = {
@@ -37,7 +52,7 @@ export class JobScraper {
     }
 
     try {
-      // Scrape from Summer 2026 Internships
+      // Scrape from Summer 2026 Internships (main README)
       const summer2026Jobs = await this.scrapeSummer2026()
       const summer2026NewJobs = await this.saveJobs(summer2026Jobs, this.SOURCES.SUMMER2026.name, this.SOURCES.SUMMER2026.url)
       results.newJobs += summer2026NewJobs
@@ -60,6 +75,48 @@ export class JobScraper {
       console.log(`✅ SWE2025: Found ${swe2025Jobs.length} jobs, ${swe2025NewJobs} new`)
     } catch (error: any) {
       const errorMsg = `SWE2025 scraping failed: ${error.message}`
+      console.error(errorMsg)
+      results.errors.push(errorMsg)
+    }
+
+    try {
+      // Scrape from 2026 AI College Jobs
+      const ai2026Jobs = await this.scrapeAI2026()
+      const ai2026NewJobs = await this.saveJobs(ai2026Jobs, this.SOURCES.AI2026.name, this.SOURCES.AI2026.url)
+      results.newJobs += ai2026NewJobs
+      results.totalJobs += ai2026Jobs.length
+
+      console.log(`✅ AI2026: Found ${ai2026Jobs.length} jobs, ${ai2026NewJobs} new`)
+    } catch (error: any) {
+      const errorMsg = `AI2026 scraping failed: ${error.message}`
+      console.error(errorMsg)
+      results.errors.push(errorMsg)
+    }
+
+    try {
+      // Scrape from 2025 Data Analysis Internship
+      const data2025Jobs = await this.scrapeJobrightAI(this.SOURCES.DATA2025.rawUrl)
+      const data2025NewJobs = await this.saveJobs(data2025Jobs, this.SOURCES.DATA2025.name, this.SOURCES.DATA2025.url)
+      results.newJobs += data2025NewJobs
+      results.totalJobs += data2025Jobs.length
+
+      console.log(`✅ Data2025: Found ${data2025Jobs.length} jobs, ${data2025NewJobs} new`)
+    } catch (error: any) {
+      const errorMsg = `Data2025 scraping failed: ${error.message}`
+      console.error(errorMsg)
+      results.errors.push(errorMsg)
+    }
+
+    try {
+      // Scrape from 2025 Product Management Internship
+      const product2025Jobs = await this.scrapeJobrightAI(this.SOURCES.PRODUCT2025.rawUrl)
+      const product2025NewJobs = await this.saveJobs(product2025Jobs, this.SOURCES.PRODUCT2025.name, this.SOURCES.PRODUCT2025.url)
+      results.newJobs += product2025NewJobs
+      results.totalJobs += product2025Jobs.length
+
+      console.log(`✅ Product2025: Found ${product2025Jobs.length} jobs, ${product2025NewJobs} new`)
+    } catch (error: any) {
+      const errorMsg = `Product2025 scraping failed: ${error.message}`
       console.error(errorMsg)
       results.errors.push(errorMsg)
     }
@@ -99,7 +156,7 @@ export class JobScraper {
   }
 
   /**
-   * Scrape jobs from Summer 2026 Internships repository
+   * Scrape jobs from Summer 2026 Internships repository (Other section)
    */
   private async scrapeSummer2026(): Promise<ScrapedJob[]> {
     const response = await axios.get(this.SOURCES.SUMMER2026.rawUrl, {
@@ -112,15 +169,27 @@ export class JobScraper {
     const content = response.data
     const jobs: ScrapedJob[] = []
 
-    // Parse markdown table
+    // Parse markdown table - look for "Other" section or any table
     const lines = content.split('\n')
     let inTable = false
+    let foundOtherSection = false
     
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim()
+
+      // Look for "Other" section
+      if (line.includes('Other') || line.includes('## The List') || line.includes('### Legend')) {
+        foundOtherSection = true
+        continue
+      }
       
-      // Detect table header
-      if (line.includes('| Company |') && line.includes('| Location |')) {
+      // Only start looking for table after finding relevant section
+      if (!foundOtherSection) {
+        continue
+      }
+      
+      // Detect table header - Summer2026 format
+      if (line.includes('| Company |') && line.includes('| Role |') && line.includes('| Date Posted |')) {
         inTable = true
         continue
       }
@@ -131,7 +200,7 @@ export class JobScraper {
       }
       
       // End of table
-      if (inTable && (!line.startsWith('|') || line.length < 10)) {
+      if (inTable && (!line.startsWith('|') || line.length < 10 || line.includes('Back to Top'))) {
         break
       }
       
@@ -281,11 +350,11 @@ export class JobScraper {
   }
 
   /**
-   * Check if a job is recent (within last 3 days)
+   * Check if a job is recent (within last 7 days to be more inclusive with multiple sources)
    */
   private isRecentJob(ageText: string): boolean {
     const age = this.parseAgeText(ageText)
-    return age !== null && age <= 3
+    return age !== null && age <= 7 // Increased from 3 to 7 days for broader coverage
   }
 
   /**
@@ -295,13 +364,26 @@ export class JobScraper {
     // Clean the text first
     const cleanText = ageText.toLowerCase().trim()
 
-    // Handle "Xd" format
+    // Handle "Xd" format (e.g., "2d", "15d")
     const dayMatch = cleanText.match(/(\d+)d/)
     if (dayMatch) {
       return parseInt(dayMatch[1])
     }
 
-    // Handle date format like "Jul 01", "Jul 02", etc.
+    // Handle "X days ago" format
+    const daysAgoMatch = cleanText.match(/(\d+)\s*days?\s*ago/)
+    if (daysAgoMatch) {
+      return parseInt(daysAgoMatch[1])
+    }
+
+    // Handle "X hours ago" format (convert to days)
+    const hoursAgoMatch = cleanText.match(/(\d+)\s*hours?\s*ago/)
+    if (hoursAgoMatch) {
+      const hours = parseInt(hoursAgoMatch[1])
+      return Math.ceil(hours / 24) // Round up to next day
+    }
+
+    // Handle date format like "Jul 01", "Jul 02", "Dec 25", etc.
     const dateMatch = cleanText.match(/(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\s*(\d{1,2})/i)
     if (dateMatch) {
       const month = dateMatch[1]
@@ -319,7 +401,24 @@ export class JobScraper {
       }
       
       const daysDiff = Math.floor((currentDate.getTime() - jobDate.getTime()) / (1000 * 60 * 60 * 24))
-      return daysDiff
+      return daysDiff >= 0 ? daysDiff : null
+    }
+
+    // Handle "today", "yesterday" text
+    if (cleanText.includes('today') || cleanText.includes('just now')) {
+      return 0
+    }
+    if (cleanText.includes('yesterday')) {
+      return 1
+    }
+
+    // Handle ISO date format (YYYY-MM-DD)
+    const isoDateMatch = cleanText.match(/(\d{4})-(\d{2})-(\d{2})/)
+    if (isoDateMatch) {
+      const jobDate = new Date(cleanText)
+      const currentDate = new Date()
+      const daysDiff = Math.floor((currentDate.getTime() - jobDate.getTime()) / (1000 * 60 * 60 * 24))
+      return daysDiff >= 0 ? daysDiff : null
     }
 
     return null
@@ -349,7 +448,7 @@ export class JobScraper {
   /**
    * Save jobs to database with deduplication
    */
-  private async saveJobs(jobs: ScrapedJob[], source: 'summer2026-internships' | '2025-swe-college-jobs', sourceUrl: string): Promise<number> {
+  private async saveJobs(jobs: ScrapedJob[], source: 'summer2026-internships' | '2025-swe-college-jobs' | '2026-ai-college-jobs' | '2025-data-analysis-internship' | '2025-product-management-internship', sourceUrl: string): Promise<number> {
     let newJobsCount = 0
 
     for (const jobData of jobs) {
@@ -397,6 +496,200 @@ export class JobScraper {
       isActive: true,
       status: { $ne: 'rejected' }
     }).sort({ postedDate: -1, scrapedAt: -1 })
+  }
+
+  /**
+   * Scrape jobs from 2026 AI College Jobs repository (Other section)
+   */
+  private async scrapeAI2026(): Promise<ScrapedJob[]> {
+    const response = await axios.get(this.SOURCES.AI2026.rawUrl, {
+      timeout: 10000,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
+      }
+    })
+
+    const content = response.data
+    const jobs: ScrapedJob[] = []
+
+    // Parse markdown table - look for "Other" section
+    const lines = content.split('\n')
+    let inTable = false
+    let foundOtherSection = false
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim()
+
+      // Look for "Other" section
+      if (line === '### Other' || line === '## Other') {
+        foundOtherSection = true
+        continue
+      }
+      
+      // Only start looking for table after finding "Other" section
+      if (!foundOtherSection) {
+        continue
+      }
+      
+      // Detect table header - AI2026 format
+      if (line.startsWith('| Company') && line.includes('| Position |') && line.includes('| Age |')) {
+        inTable = true
+        continue
+      }
+      
+      // Skip separator line
+      if (line.startsWith('|---') || line.startsWith('|-')) {
+        continue
+      }
+      
+      // End of table (next section or end of content)
+      if (inTable && (!line.startsWith('|') || line.length < 10 || line.startsWith('#'))) {
+        break
+      }
+      
+      // Parse table row
+      if (inTable && line.startsWith('|')) {
+        try {
+          const job = this.parseAI2026Row(line)
+          if (job && this.isRecentJob(job.ageText)) {
+            jobs.push(job)
+          }
+        } catch (error) {
+          console.warn('Failed to parse AI2026 row:', line, error)
+        }
+      }
+    }
+
+    return jobs
+  }
+
+  /**
+   * Parse a single row from AI2026 repository (Other section)
+   */
+  private parseAI2026Row(line: string): ScrapedJob | null {
+    const cells = line.split('|').map(cell => cell.trim()).filter(cell => cell.length > 0)
+    
+    if (cells.length < 5) return null
+
+    // Expected format: | Company | Position | Location | Posting | Age |
+    const [company, position, location, posting, age] = cells
+    
+    if (!company || !position || !location || !age) return null
+
+    // Extract text and URLs
+    const companyName = this.extractText(company)
+    const positionTitle = this.extractText(position)
+    const locationText = this.extractText(location)
+    const applicationUrl = this.extractUrl(posting) || this.extractUrl(company) // Try posting first, then company
+    const ageText = this.extractText(age)
+    
+    if (!applicationUrl || !companyName || !positionTitle) return null
+
+    return {
+      title: positionTitle,
+      company: companyName,
+      location: locationText,
+      applicationUrl,
+      ageText,
+      postedDate: this.parseAgeToDate(ageText)
+    }
+  }
+
+  /**
+   * Scrape jobs from JobrightAI repositories (Daily Job List section)
+   */
+  private async scrapeJobrightAI(rawUrl: string): Promise<ScrapedJob[]> {
+    const response = await axios.get(rawUrl, {
+      timeout: 10000,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
+      }
+    })
+
+    const content = response.data
+    const jobs: ScrapedJob[] = []
+
+    // Parse markdown table - look for "Daily Job List" section
+    const lines = content.split('\n')
+    let inTable = false
+    let foundJobListSection = false
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim()
+
+      // Look for "Daily Job List" section
+      if (line.includes('Daily Job List') || line.includes('## Daily Job List')) {
+        foundJobListSection = true
+        continue
+      }
+      
+      // Only start looking for table after finding "Daily Job List" section
+      if (!foundJobListSection) {
+        continue
+      }
+      
+      // Detect table header - JobrightAI format
+      if (line.startsWith('| Company') && line.includes('| Job Title |') && line.includes('| Date Posted |')) {
+        inTable = true
+        continue
+      }
+      
+      // Skip separator line
+      if (line.startsWith('|---') || line.startsWith('|-')) {
+        continue
+      }
+      
+      // End of table (next section or end of content)
+      if (inTable && (!line.startsWith('|') || line.length < 10 || line.startsWith('#'))) {
+        break
+      }
+      
+      // Parse table row
+      if (inTable && line.startsWith('|')) {
+        try {
+          const job = this.parseJobrightAIRow(line)
+          if (job && this.isRecentJob(job.ageText)) {
+            jobs.push(job)
+          }
+        } catch (error) {
+          console.warn('Failed to parse JobrightAI row:', line, error)
+        }
+      }
+    }
+
+    return jobs
+  }
+
+  /**
+   * Parse a single row from JobrightAI repository (Daily Job List)
+   */
+  private parseJobrightAIRow(line: string): ScrapedJob | null {
+    const cells = line.split('|').map(cell => cell.trim()).filter(cell => cell.length > 0)
+    
+    if (cells.length < 5) return null
+
+    // Expected format: | Company | Job Title | Location | Work Model | Date Posted |
+    const [company, jobTitle, location, workModel, datePosted] = cells
+    
+    if (!company || !jobTitle || !location || !datePosted) return null
+
+    // Extract text and URLs
+    const companyName = this.extractText(company)
+    const positionTitle = this.extractText(jobTitle)
+    const locationText = this.extractText(location)
+    const applicationUrl = this.extractUrl(company) || this.extractUrl(jobTitle) // Try to get URL from company or job title
+    const ageText = this.extractText(datePosted)
+    
+    if (!applicationUrl || !companyName || !positionTitle) return null
+
+    return {
+      title: positionTitle,
+      company: companyName,
+      location: locationText,
+      applicationUrl,
+      ageText,
+      postedDate: this.parseAgeToDate(ageText)
+    }
   }
 }
 
