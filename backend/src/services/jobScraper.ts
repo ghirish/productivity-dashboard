@@ -17,7 +17,8 @@ export class JobScraper {
     SUMMER2026: {
       name: 'summer2026-internships' as const,
       url: 'https://github.com/vanshb03/Summer2026-Internships/tree/dev?tab=readme-ov-file',
-      rawUrl: 'https://raw.githubusercontent.com/vanshb03/Summer2026-Internships/dev/README.md'
+      rawUrl: 'https://raw.githubusercontent.com/vanshb03/Summer2026-Internships/dev/README.md',
+      offseasonRawUrl: 'https://raw.githubusercontent.com/vanshb03/Summer2026-Internships/dev/OFFSEASON_README.md'
     },
     SWE2025: {
       name: '2025-swe-college-jobs' as const,
@@ -156,10 +157,43 @@ export class JobScraper {
   }
 
   /**
-   * Scrape jobs from Summer 2026 Internships repository (Other section)
+   * Scrape jobs from Summer 2026 Internships repository (both main and offseason README files)
    */
   private async scrapeSummer2026(): Promise<ScrapedJob[]> {
-    const response = await axios.get(this.SOURCES.SUMMER2026.rawUrl, {
+    const allJobs: ScrapedJob[] = []
+
+    try {
+      // Scrape from main README.md (Summer 2026 positions)
+      console.log('🔍 Scraping Summer 2026 main README...')
+      const mainReadmeJobs = await this.scrapeSummer2026FromUrl(this.SOURCES.SUMMER2026.rawUrl, 'main README')
+      allJobs.push(...mainReadmeJobs)
+      console.log(`✅ Found ${mainReadmeJobs.length} jobs from main README`)
+    } catch (error: any) {
+      console.error('❌ Failed to scrape main README:', error.message)
+    }
+
+    try {
+      // Scrape from OFFSEASON_README.md (Spring & Fall 2026 positions)
+      console.log('🔍 Scraping Summer 2026 offseason README...')
+      const offseasonJobs = await this.scrapeSummer2026FromUrl(this.SOURCES.SUMMER2026.offseasonRawUrl, 'offseason README')
+      allJobs.push(...offseasonJobs)
+      console.log(`✅ Found ${offseasonJobs.length} jobs from offseason README`)
+    } catch (error: any) {
+      console.error('❌ Failed to scrape offseason README:', error.message)
+    }
+
+    // Remove duplicates based on company + title + location
+    const uniqueJobs = this.removeDuplicateJobs(allJobs)
+    console.log(`🔄 Combined: ${allJobs.length} total, ${uniqueJobs.length} unique jobs`)
+
+    return uniqueJobs
+  }
+
+  /**
+   * Scrape jobs from a specific Summer 2026 README URL
+   */
+  private async scrapeSummer2026FromUrl(url: string, source: string): Promise<ScrapedJob[]> {
+    const response = await axios.get(url, {
       timeout: 10000,
       headers: {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
@@ -212,12 +246,31 @@ export class JobScraper {
             jobs.push(job)
           }
         } catch (error) {
-          console.warn('Failed to parse Summer2026 row:', line, error)
+          console.warn(`Failed to parse Summer2026 row from ${source}:`, line, error)
         }
       }
     }
 
     return jobs
+  }
+
+  /**
+   * Remove duplicate jobs based on company + title + location
+   */
+  private removeDuplicateJobs(jobs: ScrapedJob[]): ScrapedJob[] {
+    const seen = new Set<string>()
+    return jobs.filter(job => {
+      const key = `${job.company.toLowerCase()}-${job.title.toLowerCase()}-${job.location.toLowerCase()}`
+        .replace(/[^a-z0-9-]/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '')
+      
+      if (seen.has(key)) {
+        return false
+      }
+      seen.add(key)
+      return true
+    })
   }
 
   /**
