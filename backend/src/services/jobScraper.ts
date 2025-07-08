@@ -32,12 +32,12 @@ export class JobScraper {
     DATA2025: {
       name: '2025-data-analysis-internship' as const,
       url: 'https://github.com/jobright-ai/2025-Data-Analysis-Internship?tab=readme-ov-file',
-      rawUrl: 'https://raw.githubusercontent.com/jobright-ai/2025-Data-Analysis-Internship/main/README.md'
+      rawUrl: 'https://raw.githubusercontent.com/jobright-ai/2025-Data-Analysis-Internship/master/README.md'
     },
     PRODUCT2025: {
       name: '2025-product-management-internship' as const,
       url: 'https://github.com/jobright-ai/2025-Product-Management-Internship',
-      rawUrl: 'https://raw.githubusercontent.com/jobright-ai/2025-Product-Management-Internship/main/README.md'
+      rawUrl: 'https://raw.githubusercontent.com/jobright-ai/2025-Product-Management-Internship/master/README.md'
     }
   }
 
@@ -95,7 +95,7 @@ export class JobScraper {
 
     try {
       // Scrape from 2025 Data Analysis Internship
-      const data2025Jobs = await this.scrapeJobrightAI(this.SOURCES.DATA2025.rawUrl)
+      const data2025Jobs = await this.scrapeJobrightAI('DATA2025')
       const data2025NewJobs = await this.saveJobs(data2025Jobs, this.SOURCES.DATA2025.name, this.SOURCES.DATA2025.url)
       results.newJobs += data2025NewJobs
       results.totalJobs += data2025Jobs.length
@@ -109,7 +109,7 @@ export class JobScraper {
 
     try {
       // Scrape from 2025 Product Management Internship
-      const product2025Jobs = await this.scrapeJobrightAI(this.SOURCES.PRODUCT2025.rawUrl)
+      const product2025Jobs = await this.scrapeJobrightAI('PRODUCT2025')
       const product2025NewJobs = await this.saveJobs(product2025Jobs, this.SOURCES.PRODUCT2025.name, this.SOURCES.PRODUCT2025.url)
       results.newJobs += product2025NewJobs
       results.totalJobs += product2025Jobs.length
@@ -596,68 +596,54 @@ export class JobScraper {
   }
 
   /**
-   * Scrape jobs from JobrightAI repositories (Daily Job List section)
+   * Scrape jobs from JobrightAI repositories (Data Analysis, Product Management)
    */
-  private async scrapeJobrightAI(rawUrl: string): Promise<ScrapedJob[]> {
-    const response = await axios.get(rawUrl, {
-      timeout: 10000,
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
-      }
-    })
+  private async scrapeJobrightAI(source: 'DATA2025' | 'PRODUCT2025'): Promise<ScrapedJob[]> {
+    const sourceConfig = this.SOURCES[source]
+    console.log(`\n🔍 Scraping ${sourceConfig.name}...`)
 
-    const content = response.data
-    const jobs: ScrapedJob[] = []
+    try {
+      const content = await this.fetchGitHubReadme(sourceConfig.rawUrl)
+      
+      // Find the "Daily Job List" section
+      const dailyJobListStart = content.indexOf('## Daily Job List')
+      if (dailyJobListStart === -1) {
+        console.log('❌ Could not find "Daily Job List" section')
+        return []
+      }
 
-    // Parse markdown table - look for "Daily Job List" section
-    const lines = content.split('\n')
-    let inTable = false
-    let foundJobListSection = false
-    
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i].trim()
+      // Find the table start
+      const tableStart = content.indexOf('| Company |', dailyJobListStart)
+      if (tableStart === -1) {
+        console.log('❌ Could not find table header')
+        return []
+      }
 
-      // Look for "Daily Job List" section
-      if (line.includes('Daily Job List') || line.includes('## Daily Job List')) {
-        foundJobListSection = true
-        continue
-      }
-      
-      // Only start looking for table after finding "Daily Job List" section
-      if (!foundJobListSection) {
-        continue
-      }
-      
-      // Detect table header - JobrightAI format
-      if (line.startsWith('| Company') && line.includes('| Job Title |') && line.includes('| Date Posted |')) {
-        inTable = true
-        continue
-      }
-      
-      // Skip separator line
-      if (line.startsWith('|---') || line.startsWith('|-')) {
-        continue
-      }
-      
-      // End of table (next section or end of content)
-      if (inTable && (!line.startsWith('|') || line.length < 10 || line.startsWith('#'))) {
-        break
-      }
-      
-      // Parse table row
-      if (inTable && line.startsWith('|')) {
-        try {
+      // Extract table content until next section or end
+      const tableEnd = content.indexOf('\n## ', tableStart + 1)
+      const tableContent = tableEnd === -1 ? 
+        content.substring(tableStart) : 
+        content.substring(tableStart, tableEnd)
+
+      const lines = tableContent.split('\n')
+      const jobs: ScrapedJob[] = []
+
+      for (const line of lines) {
+        if (line.includes('|') && !line.includes('Company') && !line.includes('-----')) {
           const job = this.parseJobrightAIRow(line)
-          if (job && this.isRecentJob(job.ageText)) {
+          if (job) {
             jobs.push(job)
           }
-        } catch (error) {
-          console.warn('Failed to parse JobrightAI row:', line, error)
         }
       }
-    }
 
-    return jobs
+      console.log(`✅ Found ${jobs.length} jobs`)
+      return jobs
+
+    } catch (error) {
+      console.error(`❌ Error scraping ${sourceConfig.name}:`, error)
+      return []
+    }
   }
 
   /**
@@ -673,11 +659,11 @@ export class JobScraper {
     
     if (!company || !jobTitle || !location || !datePosted) return null
 
-    // Extract text and URLs
+    // Extract text and URLs - prioritize job title URL as it contains the application link
     const companyName = this.extractText(company)
     const positionTitle = this.extractText(jobTitle)
     const locationText = this.extractText(location)
-    const applicationUrl = this.extractUrl(company) || this.extractUrl(jobTitle) // Try to get URL from company or job title
+    const applicationUrl = this.extractUrl(jobTitle) || this.extractUrl(company) // Try job title first, then company
     const ageText = this.extractText(datePosted)
     
     if (!applicationUrl || !companyName || !positionTitle) return null
@@ -689,6 +675,35 @@ export class JobScraper {
       applicationUrl,
       ageText,
       postedDate: this.parseAgeToDate(ageText)
+    }
+  }
+
+  /**
+   * Fetch GitHub README content
+   */
+  private async fetchGitHubReadme(url: string): Promise<string> {
+    try {
+      console.log(`🌐 Fetching URL: ${url}`)
+      const response = await axios.get(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; ProductivityDashboard/1.0; +http://localhost:3000)',
+          'Accept': 'text/plain, text/html, */*'
+        },
+        timeout: 30000
+      })
+      console.log(`✅ Successfully fetched ${url} (status: ${response.status})`)
+      return response.data
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error(`❌ Failed to fetch ${url}:`)
+        console.error(`   Status: ${error.response?.status}`)
+        console.error(`   Status Text: ${error.response?.statusText}`)
+        console.error(`   Headers: ${JSON.stringify(error.response?.headers)}`)
+        console.error(`   URL: ${error.config?.url}`)
+      } else {
+        console.error(`❌ Failed to fetch ${url}:`, error)
+      }
+      throw error
     }
   }
 }

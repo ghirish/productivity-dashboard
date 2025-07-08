@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import './App.css';
 import { DashboardLayout } from './components/DashboardLayout';
 import { Overview } from './components/Overview';
@@ -8,6 +8,36 @@ import { ProductivityPage } from './components/ProductivityPage';
 import { IntegrationsPage } from './components/IntegrationsPage';
 import JobsPage from './components/JobsPage';
 import { BarChart3, Briefcase, Plus, TrendingUp } from 'lucide-react';
+import { Toaster } from 'sonner';
+
+// Global ResizeObserver error suppression
+const suppressResizeObserverErrors = () => {
+  // Suppress ResizeObserver errors
+  const originalError = console.error;
+  console.error = (...args) => {
+    if (args[0]?.includes?.('ResizeObserver loop completed with undelivered notifications')) {
+      return;
+    }
+    originalError.apply(console, args);
+  };
+
+  // Suppress window error events for ResizeObserver
+  window.addEventListener('error', (e) => {
+    if (e.message.includes('ResizeObserver loop completed with undelivered notifications')) {
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    }
+  });
+
+  // Suppress unhandled promise rejections for ResizeObserver
+  window.addEventListener('unhandledrejection', (e) => {
+    if (e.reason?.message?.includes('ResizeObserver loop completed with undelivered notifications')) {
+      e.preventDefault();
+      return false;
+    }
+  });
+};
 
 // Modern placeholder pages
 const Analytics = () => (
@@ -41,9 +71,11 @@ const Analytics = () => (
   </div>
 );
 
-
-
 export function App() {
+  useEffect(() => {
+    suppressResizeObserverErrors();
+  }, []);
+
   return (
     <BrowserRouter>
       <DashboardLayout>
@@ -56,6 +88,7 @@ export function App() {
           <Route path="/jobs" element={<JobsPage />} />
         </Routes>
       </DashboardLayout>
+      <Toaster position="top-right" />
     </BrowserRouter>
   );
 }

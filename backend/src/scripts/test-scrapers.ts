@@ -1,107 +1,121 @@
 import mongoose from 'mongoose'
 import jobScraper from '../services/jobScraper'
 
-async function testScrapersDetailed() {
+async function testEachRepository() {
   try {
     // Connect to MongoDB
     await mongoose.connect(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/productivity_dashboard')
-    console.log('📊 Connected to MongoDB')
+    console.log('📊 Connected to MongoDB\n')
 
-    console.log('🚀 Testing individual job scrapers...\n')
-
-    // Test each scraper individually to see extracted jobs
-    const scraperInstance = (jobScraper as any)
-
-    // Test Summer 2026
-    console.log('🔍 Testing Summer 2026 Internships...')
+    // Test each repository individually
+    console.log('=' .repeat(80))
+    console.log('🔗 GITHUB REPOSITORY: Summer 2026 Internships')
+    console.log('🌐 URL: https://github.com/vanshb03/Summer2026-Internships/tree/dev?tab=readme-ov-file')
+    console.log('📄 Section: Main table')
+    console.log('=' .repeat(80))
     try {
-      const summer2026Jobs = await scraperInstance.scrapeSummer2026()
-      console.log(`Found ${summer2026Jobs.length} jobs:`)
-      summer2026Jobs.slice(0, 3).forEach((job: any, index: number) => {
-        console.log(`  ${index + 1}. ${job.company} - ${job.title}`)
-        console.log(`     Location: ${job.location}`)
-        console.log(`     Age: ${job.ageText}`)
-        console.log(`     URL: ${job.applicationUrl.substring(0, 60)}...`)
+      const summer2026Jobs = await (jobScraper as any).scrapeSummer2026()
+      console.log(`✅ Found ${summer2026Jobs.length} jobs:\n`)
+      summer2026Jobs.forEach((job: any, index: number) => {
+        console.log(`${index + 1}. ${job.company} - ${job.title}`)
+        console.log(`   📍 Location: ${job.location}`)
+        console.log(`   📅 Posted: ${job.ageText}`)
+        console.log(`   🔗 Apply: ${job.applicationUrl}`)
         console.log('')
       })
     } catch (error: any) {
-      console.log(`❌ Summer2026 failed: ${error.message}`)
+      console.log(`❌ Failed: ${error.message}\n`)
     }
 
-    // Test SWE 2025
-    console.log('🔍 Testing 2025 SWE College Jobs...')
+    console.log('=' .repeat(80))
+    console.log('🔗 GITHUB REPOSITORY: 2025 SWE College Jobs')
+    console.log('🌐 URL: https://github.com/speedyapply/2025-SWE-College-Jobs/blob/main/README.md')
+    console.log('📄 Section: Other section')
+    console.log('=' .repeat(80))
     try {
-      const swe2025Jobs = await scraperInstance.scrapeSWE2025()
-      console.log(`Found ${swe2025Jobs.length} jobs:`)
-      swe2025Jobs.slice(0, 3).forEach((job: any, index: number) => {
-        console.log(`  ${index + 1}. ${job.company} - ${job.title}`)
-        console.log(`     Location: ${job.location}`)
-        console.log(`     Age: ${job.ageText}`)
-        console.log(`     URL: ${job.applicationUrl.substring(0, 60)}...`)
+      const swe2025Jobs = await (jobScraper as any).scrapeSWE2025()
+      console.log(`✅ Found ${swe2025Jobs.length} jobs:\n`)
+      swe2025Jobs.forEach((job: any, index: number) => {
+        console.log(`${index + 1}. ${job.company} - ${job.title}`)
+        console.log(`   📍 Location: ${job.location}`)
+        console.log(`   📅 Posted: ${job.ageText}`)
+        console.log(`   🔗 Apply: ${job.applicationUrl}`)
         console.log('')
       })
     } catch (error: any) {
-      console.log(`❌ SWE2025 failed: ${error.message}`)
+      console.log(`❌ Failed: ${error.message}\n`)
     }
 
-    // Test AI 2026
-    console.log('🔍 Testing 2026 AI College Jobs...')
+    console.log('=' .repeat(80))
+    console.log('🔗 GITHUB REPOSITORY: 2026 AI College Jobs')
+    console.log('🌐 URL: https://github.com/speedyapply/2026-AI-College-Jobs')
+    console.log('📄 Section: Other section')
+    console.log('=' .repeat(80))
     try {
-      const ai2026Jobs = await scraperInstance.scrapeAI2026()
-      console.log(`Found ${ai2026Jobs.length} jobs:`)
-      ai2026Jobs.slice(0, 3).forEach((job: any, index: number) => {
-        console.log(`  ${index + 1}. ${job.company} - ${job.title}`)
-        console.log(`     Location: ${job.location}`)
-        console.log(`     Age: ${job.ageText}`)
-        console.log(`     URL: ${job.applicationUrl.substring(0, 60)}...`)
+      const ai2026Jobs = await (jobScraper as any).scrapeAI2026()
+      console.log(`✅ Found ${ai2026Jobs.length} jobs:\n`)
+      ai2026Jobs.forEach((job: any, index: number) => {
+        console.log(`${index + 1}. ${job.company} - ${job.title}`)
+        console.log(`   📍 Location: ${job.location}`)
+        console.log(`   📅 Posted: ${job.ageText}`)
+        console.log(`   🔗 Apply: ${job.applicationUrl}`)
         console.log('')
       })
     } catch (error: any) {
-      console.log(`❌ AI2026 failed: ${error.message}`)
+      console.log(`❌ Failed: ${error.message}\n`)
     }
 
-    // Test Data Analysis 2025
-    console.log('🔍 Testing 2025 Data Analysis Internship...')
+    console.log('=' .repeat(80))
+    console.log('🔗 GITHUB REPOSITORY: 2025 Data Analysis Internship')
+    console.log('🌐 URL: https://github.com/jobright-ai/2025-Data-Analysis-Internship?tab=readme-ov-file')
+    console.log('📄 Section: Daily Job List')
+    console.log('=' .repeat(80))
     try {
-      const data2025Jobs = await scraperInstance.scrapeJobrightAI('https://raw.githubusercontent.com/jobright-ai/2025-Data-Analysis-Internship/main/README.md')
-      console.log(`Found ${data2025Jobs.length} jobs:`)
-      data2025Jobs.slice(0, 3).forEach((job: any, index: number) => {
-        console.log(`  ${index + 1}. ${job.company} - ${job.title}`)
-        console.log(`     Location: ${job.location}`)
-        console.log(`     Age: ${job.ageText}`)
-        console.log(`     URL: ${job.applicationUrl.substring(0, 60)}...`)
+      const data2025Jobs = await (jobScraper as any).scrapeJobrightAI('DATA2025')
+      console.log(`✅ Found ${data2025Jobs.length} jobs:\n`)
+      data2025Jobs.forEach((job: any, index: number) => {
+        console.log(`${index + 1}. ${job.company} - ${job.title}`)
+        console.log(`   📍 Location: ${job.location}`)
+        console.log(`   📅 Posted: ${job.ageText}`)
+        console.log(`   🔗 Apply: ${job.applicationUrl}`)
         console.log('')
       })
     } catch (error: any) {
-      console.log(`❌ Data2025 failed: ${error.message}`)
+      console.log(`❌ Failed: ${error.message}\n`)
     }
 
-    // Test Product Management 2025
-    console.log('🔍 Testing 2025 Product Management Internship...')
+    console.log('=' .repeat(80))
+    console.log('🔗 GITHUB REPOSITORY: 2025 Product Management Internship')
+    console.log('🌐 URL: https://github.com/jobright-ai/2025-Product-Management-Internship')
+    console.log('📄 Section: Daily Job List')
+    console.log('=' .repeat(80))
     try {
-      const product2025Jobs = await scraperInstance.scrapeJobrightAI('https://raw.githubusercontent.com/jobright-ai/2025-Product-Management-Internship/main/README.md')
-      console.log(`Found ${product2025Jobs.length} jobs:`)
-      product2025Jobs.slice(0, 3).forEach((job: any, index: number) => {
-        console.log(`  ${index + 1}. ${job.company} - ${job.title}`)
-        console.log(`     Location: ${job.location}`)
-        console.log(`     Age: ${job.ageText}`)
-        console.log(`     URL: ${job.applicationUrl.substring(0, 60)}...`)
+      const product2025Jobs = await (jobScraper as any).scrapeJobrightAI('PRODUCT2025')
+      console.log(`✅ Found ${product2025Jobs.length} jobs:\n`)
+      product2025Jobs.forEach((job: any, index: number) => {
+        console.log(`${index + 1}. ${job.company} - ${job.title}`)
+        console.log(`   📍 Location: ${job.location}`)
+        console.log(`   📅 Posted: ${job.ageText}`)
+        console.log(`   🔗 Apply: ${job.applicationUrl}`)
         console.log('')
       })
     } catch (error: any) {
-      console.log(`❌ Product2025 failed: ${error.message}`)
+      console.log(`❌ Failed: ${error.message}\n`)
     }
 
-    console.log('🔍 Testing complete scraping workflow...')
-    const results = await jobScraper.scrapeAllJobs()
-    
-    console.log('\n📈 Overall Results:')
-    console.log(`✅ Total jobs found: ${results.totalJobs}`)
-    console.log(`🆕 New jobs added: ${results.newJobs}`)
-    
-    if (results.errors.length > 0) {
-      console.log('\n❌ Errors encountered:')
-      results.errors.forEach(error => console.log(`  - ${error}`))
+    console.log('=' .repeat(80))
+    console.log('📊 OVERALL TEST - All repositories combined')
+    console.log('=' .repeat(80))
+    try {
+      const results = await jobScraper.scrapeAllJobs()
+      console.log(`✅ Total jobs found: ${results.totalJobs}`)
+      console.log(`🆕 New jobs added: ${results.newJobs}`)
+      if (results.errors.length > 0) {
+        console.log('\n❌ Errors encountered:')
+        results.errors.forEach(error => console.log(`  - ${error}`))
+      }
+    } catch (error: any) {
+      console.log(`❌ Overall test failed: ${error.message}`)
     }
 
   } catch (error) {
@@ -113,5 +127,5 @@ async function testScrapersDetailed() {
   }
 }
 
-// Run the detailed test
-testScrapersDetailed() 
+// Run the test
+testEachRepository() 

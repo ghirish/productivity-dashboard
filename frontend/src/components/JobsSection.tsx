@@ -19,7 +19,7 @@ interface Job {
   location: string
   salary?: string
   applicationUrl: string
-  source: 'summer2026-internships' | '2025-swe-college-jobs'
+  source: 'summer2026-internships' | '2025-swe-college-jobs' | '2026-ai-college-jobs' | '2025-data-analysis-internship' | '2025-product-management-internship'
   sourceUrl: string
   postedDate: string
   ageText: string
@@ -98,10 +98,12 @@ const JobsSection: React.FC = () => {
     fetchJobs()
   }, [filters])
 
-  const fetchJobs = async () => {
+  const fetchJobs = async (page: number = 1) => {
     setLoading(true)
     try {
       const params = new URLSearchParams()
+      params.append('page', page.toString())
+      params.append('limit', '5') // 5 results per page
       params.append('days', filters.days.toString())
       if (filters.status !== 'all') params.append('status', filters.status)
       if (filters.company) params.append('company', filters.company)
@@ -121,6 +123,10 @@ const JobsSection: React.FC = () => {
     } finally {
       setLoading(false)
     }
+  }
+
+  const fetchJobsPage = (page: number) => {
+    fetchJobs(page)
   }
 
   const triggerScraping = async () => {
@@ -210,7 +216,14 @@ const JobsSection: React.FC = () => {
   }
 
   const getSourceBadge = (source: Job['source']) => {
-    return source === 'summer2026-internships' ? '2026 Internships' : '2025 SWE Jobs'
+    switch(source) {
+      case 'summer2026-internships': return 'Summer 2026'
+      case '2025-swe-college-jobs': return '2025 SWE'
+      case '2026-ai-college-jobs': return '2026 AI'
+      case '2025-data-analysis-internship': return '2025 Data'
+      case '2025-product-management-internship': return '2025 PM'
+      default: return source
+    }
   }
 
   return (
@@ -337,8 +350,11 @@ const JobsSection: React.FC = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Sources</SelectItem>
-                  <SelectItem value="summer2026-internships">2026 Internships</SelectItem>
-                  <SelectItem value="2025-swe-college-jobs">2025 SWE Jobs</SelectItem>
+                  <SelectItem value="summer2026-internships">Summer 2026 Internships</SelectItem>
+                  <SelectItem value="2025-swe-college-jobs">2025 SWE College Jobs</SelectItem>
+                  <SelectItem value="2026-ai-college-jobs">2026 AI College Jobs</SelectItem>
+                  <SelectItem value="2025-data-analysis-internship">2025 Data Analysis Internship</SelectItem>
+                  <SelectItem value="2025-product-management-internship">2025 Product Management Internship</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -448,6 +464,34 @@ const JobsSection: React.FC = () => {
               {jobs.length === 0 && (
                 <div className="text-center py-8 text-muted-foreground">
                   No jobs found matching your filters.
+                </div>
+              )}
+
+              {/* Pagination Controls */}
+              {pagination.totalPages > 1 && (
+                <div className="flex items-center justify-between pt-4">
+                  <div className="text-sm text-muted-foreground">
+                    Showing page {pagination.currentPage} of {pagination.totalPages} 
+                    ({pagination.totalJobs} total jobs)
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fetchJobsPage(pagination.currentPage - 1)}
+                      disabled={!pagination.hasPrev}
+                    >
+                      Previous
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fetchJobsPage(pagination.currentPage + 1)}
+                      disabled={!pagination.hasNext}
+                    >
+                      Next
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>
