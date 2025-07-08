@@ -517,8 +517,21 @@ export const Overview: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
+      {/* Floating Background Particles */}
+      <div className="particle-bg">
+        <div className="particle" style={{ width: '4px', height: '4px' }}></div>
+        <div className="particle" style={{ width: '6px', height: '6px' }}></div>
+        <div className="particle" style={{ width: '3px', height: '3px' }}></div>
+        <div className="particle" style={{ width: '5px', height: '5px' }}></div>
+        <div className="particle" style={{ width: '4px', height: '4px' }}></div>
+        <div className="particle" style={{ width: '7px', height: '7px' }}></div>
+        <div className="particle" style={{ width: '3px', height: '3px' }}></div>
+        <div className="particle" style={{ width: '5px', height: '5px' }}></div>
+        <div className="particle" style={{ width: '4px', height: '4px' }}></div>
+      </div>
+
       {/* Welcome Section */}
-      <div className="glass-card p-8">
+      <div className="glass-card p-8 stagger-1 float-gentle">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-4xl font-bold gradient-text mb-2">
@@ -541,12 +554,12 @@ export const Overview: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* Focus Timer Widget - Full Width */}
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 stagger-2 float-drift-left">
           <PomodoroTimer />
         </div>
 
         {/* Large Square Spotify Player */}
-        <div className="lg:col-span-1">
+        <div className="lg:col-span-1 stagger-3 float-drift-right">
           <div className="mb-4">
             <h3 className="text-lg font-semibold gradient-text">Now Playing</h3>
           </div>
@@ -555,7 +568,7 @@ export const Overview: React.FC = () => {
       </div>
 
       {/* GitHub Contribution Chart - Long Rectangle */}
-      <Card className="glass-card">
+      <Card className="glass-card stagger-4 float-subtle">
           <CardHeader>
           <div className="flex items-center justify-between">
             <div>
@@ -581,7 +594,7 @@ export const Overview: React.FC = () => {
         </Card>
 
       {/* Weekly Planning & Today's Focus */}
-      <Card className="glass-card">
+      <Card className="glass-card stagger-5 float-drift-left">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle className="gradient-text">Weekly Planning & Today's Focus</CardTitle>
@@ -618,71 +631,60 @@ export const Overview: React.FC = () => {
             </div>
 
             {/* Today's Tasks Detail - Right Side */}
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-slate-700 dark:text-slate-200">
-                  {selectedDay === 'today' ? "Today's Tasks" : `${selectedDay} Tasks`}
+            <div className="lg:col-span-1">
+              <div className="mb-4">
+                <h3 className="font-semibold text-slate-700 dark:text-slate-200 mb-2">
+                  Today's Tasks ({new Date(selectedDay).toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' })})
                 </h3>
-                <Button
-                  onClick={() => setShowAddDialog(true)}
-                  size="sm"
-                  className="modern-button"
-                >
-                  <Plus className="w-4 h-4 mr-1" />
-                  Add
-                </Button>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  {todayTasks.filter(t => !t.completed).length} remaining
+                </p>
               </div>
-              
-              <div className="space-y-3 max-h-80 overflow-y-auto">
+              <div className="space-y-3 max-h-96 overflow-y-auto">
                 {todayTasks.length === 0 ? (
-                  <div className="text-center py-8 text-slate-500 dark:text-slate-400">
-                    <Target className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">No tasks for {selectedDay === 'today' ? 'today' : selectedDay}</p>
+                  <div className="text-center py-8 text-slate-400 dark:text-slate-500">
+                    <Clock className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                    <p>No tasks for today</p>
+                    <p className="text-sm">Create a new task to get started</p>
                   </div>
                 ) : (
                   todayTasks.map((task) => (
-                    <div
-                      key={task.id}
-                      className={`p-3 rounded-lg border transition-colors ${
-                        task.completed
-                          ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800'
-                          : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750'
-                      }`}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-start gap-3 flex-1">
-                          <button
-                            onClick={() => toggleTask(task.id)}
-                            className={`mt-0.5 w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${
-                              task.completed
-                                ? 'bg-emerald-500 border-emerald-500 text-white'
-                                : 'border-slate-300 dark:border-slate-600 hover:border-emerald-500'
-                            }`}
-                          >
-                            {task.completed && <CheckCircle className="w-3 h-3" />}
-                          </button>
-                          <div className="flex-1">
-                            <h4 className={`font-medium ${
-                              task.completed 
-                                ? 'text-emerald-700 dark:text-emerald-300 line-through' 
-                                : 'text-slate-900 dark:text-white'
-                            }`}>
-                              {task.title}
-                            </h4>
-                            <div className="flex items-center gap-2 mt-1">
-                              <Badge 
-                                variant="outline" 
-                                className={`text-xs ${getPriorityColor(task.priority)}`}
-                              >
-                                {task.priority}
-                              </Badge>
-                              {task.estimatedTime && (
-                                <span className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                                  <Clock className="w-3 h-3" />
-                                  {task.estimatedTime}
-                                </span>
-                              )}
-                            </div>
+                                         <div key={task.id} className="task-item">
+                                             <div className="flex items-start gap-3 w-full">
+                         <button
+                           onClick={() => toggleTask(task.id)}
+                           className={`flex-shrink-0 w-5 h-5 rounded border-2 transition-all duration-200 mt-1 ${
+                             task.completed 
+                               ? 'bg-emerald-500 border-emerald-500' 
+                               : 'border-slate-300 dark:border-slate-600 hover:border-emerald-400'
+                           }`}
+                         >
+                           {task.completed && (
+                             <CheckCircle className="w-3 h-3 text-white m-0.5" />
+                           )}
+                         </button>
+                        
+                        <div className="flex-1">
+                          <h4 className={`font-medium ${
+                            task.completed 
+                              ? 'text-emerald-700 dark:text-emerald-300 line-through' 
+                              : 'text-slate-900 dark:text-white'
+                          }`}>
+                            {task.title}
+                          </h4>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Badge 
+                              variant="outline" 
+                              className={`text-xs ${getPriorityColor(task.priority)}`}
+                            >
+                              {task.priority}
+                            </Badge>
+                            {task.estimatedTime && (
+                              <span className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                                <Clock className="w-3 h-3" />
+                                {task.estimatedTime}
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -696,35 +698,37 @@ export const Overview: React.FC = () => {
       </Card>
 
       {/* Jobs Dashboard */}
-      <JobsDashboard />
+      <div className="stagger-6 float-drift-right">
+        <JobsDashboard />
+      </div>
 
       {/* Quick Actions */}
-      <Card className="glass-card">
+      <Card className="glass-card stagger-4 float-gentle">
           <CardHeader>
           <CardTitle className="gradient-text">Quick Actions</CardTitle>
           </CardHeader>
           <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <Link to="/leetcode">
-              <Button variant="outline" className="w-full h-20 flex-col gap-2 border-slate-300 dark:border-slate-600">
+              <Button variant="outline" className="w-full h-20 flex-col gap-2 border-slate-300 dark:border-slate-600 hover:scale-105 transition-all duration-300">
                 <Code className="w-6 h-6" />
                 <span className="text-sm">LeetCode</span>
               </Button>
             </Link>
             <Link to="/productivity">
-              <Button variant="outline" className="w-full h-20 flex-col gap-2 border-slate-300 dark:border-slate-600">
+              <Button variant="outline" className="w-full h-20 flex-col gap-2 border-slate-300 dark:border-slate-600 hover:scale-105 transition-all duration-300">
                 <Target className="w-6 h-6" />
                 <span className="text-sm">Productivity</span>
               </Button>
             </Link>
             <Link to="/integrations">
-              <Button variant="outline" className="w-full h-20 flex-col gap-2 border-slate-300 dark:border-slate-600">
+              <Button variant="outline" className="w-full h-20 flex-col gap-2 border-slate-300 dark:border-slate-600 hover:scale-105 transition-all duration-300">
                 <Zap className="w-6 h-6" />
                 <span className="text-sm">Integrations</span>
               </Button>
             </Link>
             <Link to="/jobs">
-              <Button variant="outline" className="w-full h-20 flex-col gap-2 border-slate-300 dark:border-slate-600">
+              <Button variant="outline" className="w-full h-20 flex-col gap-2 border-slate-300 dark:border-slate-600 hover:scale-105 transition-all duration-300">
                 <Briefcase className="w-6 h-6" />
                 <span className="text-sm">Jobs</span>
               </Button>
@@ -1008,20 +1012,20 @@ const JobsDashboard: React.FC = () => {
       <CardContent>
         {/* Stats Summary */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-lg">
-            <div className="text-2xl font-bold text-slate-900 dark:text-white">{jobStats.totalJobs}</div>
+          <div className="stat-card bg-slate-50 dark:bg-slate-800 stagger-1">
+            <div className="metric-value text-slate-900 dark:text-white">{jobStats.totalJobs}</div>
             <p className="text-xs text-slate-500 dark:text-slate-400">Total Jobs</p>
           </div>
-          <div className="bg-blue-50 dark:bg-blue-950/30 p-3 rounded-lg">
-            <div className="text-2xl font-bold text-blue-600">{jobStats.newJobs}</div>
+          <div className="stat-card bg-blue-50 dark:bg-blue-950/30 stagger-2">
+            <div className="metric-value text-blue-600">{jobStats.newJobs}</div>
             <p className="text-xs text-slate-500 dark:text-slate-400">New Today</p>
           </div>
-          <div className="bg-green-50 dark:bg-green-950/30 p-3 rounded-lg">
-            <div className="text-2xl font-bold text-green-600">{jobStats.appliedJobs}</div>
+          <div className="stat-card bg-green-50 dark:bg-green-950/30 stagger-3">
+            <div className="metric-value text-green-600">{jobStats.appliedJobs}</div>
             <p className="text-xs text-slate-500 dark:text-slate-400">Applied</p>
           </div>
-          <div className="bg-amber-50 dark:bg-amber-950/30 p-3 rounded-lg">
-            <div className="text-2xl font-bold text-amber-600">{jobStats.remainingJobs}</div>
+          <div className="stat-card bg-amber-50 dark:bg-amber-950/30 stagger-4">
+            <div className="metric-value text-amber-600">{jobStats.remainingJobs}</div>
             <p className="text-xs text-slate-500 dark:text-slate-400">Remaining</p>
           </div>
         </div>
@@ -1101,7 +1105,7 @@ const JobsDashboard: React.FC = () => {
         ) : (
           <div className="space-y-3">
             {jobs.map((job) => (
-              <div key={job._id || job.id} className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4 hover:shadow-md transition-shadow">
+              <div key={job._id || job.id} className="job-card p-4">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">

@@ -248,45 +248,45 @@ const JobsSection: React.FC = () => {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-        <Card>
+        <Card className="stagger-1 float-gentle">
           <CardContent className="p-4">
-            <div className="text-2xl font-bold">{summary.total}</div>
+            <div className="metric-value">{summary.total}</div>
             <p className="text-xs text-muted-foreground">Total Jobs</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="stagger-2 float-drift-left">
           <CardContent className="p-4">
-            <div className="text-2xl font-bold text-blue-600">{summary.new}</div>
+            <div className="metric-value text-blue-600">{summary.new}</div>
             <p className="text-xs text-muted-foreground">New</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="stagger-3 float-drift-right">
           <CardContent className="p-4">
-            <div className="text-2xl font-bold text-yellow-600">{summary.interested}</div>
+            <div className="metric-value text-yellow-600">{summary.interested}</div>
             <p className="text-xs text-muted-foreground">Interested</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="stagger-4 float-subtle">
           <CardContent className="p-4">
-            <div className="text-2xl font-bold text-green-600">{summary.applied}</div>
+            <div className="metric-value text-green-600">{summary.applied}</div>
             <p className="text-xs text-muted-foreground">Applied</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="stagger-5 float-gentle">
           <CardContent className="p-4">
-            <div className="text-2xl font-bold text-purple-600">{summary.interview}</div>
+            <div className="metric-value text-purple-600">{summary.interview}</div>
             <p className="text-xs text-muted-foreground">Interview</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="stagger-6 float-drift-left">
           <CardContent className="p-4">
-            <div className="text-2xl font-bold text-red-600">{summary.rejected}</div>
+            <div className="metric-value text-red-600">{summary.rejected}</div>
             <p className="text-xs text-muted-foreground">Rejected</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="stagger-1 float-drift-right">
           <CardContent className="p-4">
-            <div className="text-2xl font-bold text-emerald-600">{summary.offer}</div>
+            <div className="metric-value text-emerald-600">{summary.offer}</div>
             <p className="text-xs text-muted-foreground">Offers</p>
           </CardContent>
         </Card>

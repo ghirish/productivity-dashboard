@@ -286,14 +286,14 @@ export const GitHubSection: React.FC = () => {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="glass-card">
+        <Card className="glass-card stagger-1 float-gentle">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
                   Repositories
                 </p>
-                <p className="text-3xl font-bold text-slate-900 dark:text-white">
+                <p className="metric-value text-slate-900 dark:text-white">
                   {stats?.totalRepos || user?.publicRepos || 0}
                 </p>
               </div>
@@ -302,14 +302,14 @@ export const GitHubSection: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Card className="glass-card">
+        <Card className="glass-card stagger-2 float-drift-left">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
                   Total Stars
                 </p>
-                <p className="text-3xl font-bold text-slate-900 dark:text-white">
+                <p className="metric-value text-slate-900 dark:text-white">
                   {stats?.totalStars || 0}
                 </p>
               </div>
@@ -318,14 +318,14 @@ export const GitHubSection: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Card className="glass-card">
+        <Card className="glass-card stagger-3 float-drift-right">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
                   Current Streak
                 </p>
-                <p className="text-3xl font-bold text-slate-900 dark:text-white">
+                <p className="metric-value text-slate-900 dark:text-white">
                   {contributions?.currentStreak || 0}
                 </p>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -337,14 +337,14 @@ export const GitHubSection: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Card className="glass-card">
+        <Card className="glass-card stagger-4 float-subtle">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
                   Followers
                 </p>
-                <p className="text-3xl font-bold text-slate-900 dark:text-white">
+                <p className="metric-value text-slate-900 dark:text-white">
                   {user?.followers || 0}
                 </p>
               </div>
@@ -357,7 +357,7 @@ export const GitHubSection: React.FC = () => {
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Contribution Graph */}
-        <Card className="glass-card">
+        <Card className="glass-card stagger-5 float-drift-left">
           <CardHeader>
             <CardTitle className="gradient-text">Contribution Activity</CardTitle>
             <p className="subtitle-text">

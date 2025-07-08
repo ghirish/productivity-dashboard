@@ -65,39 +65,39 @@ export const ProductivityPage: React.FC = () => {
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="glass-card p-6 text-center">
+        <div className="glass-card p-6 text-center stagger-1 float-gentle">
           <Clock className="w-8 h-8 text-slate-600 dark:text-slate-300 mx-auto mb-2" />
           <h3 className="font-semibold text-slate-700 dark:text-slate-200 mb-1">
             Focus Sessions
           </h3>
-          <p className="text-2xl font-bold text-slate-900 dark:text-white">0</p>
+          <p className="metric-value text-slate-900 dark:text-white">0</p>
           <p className="text-sm subtitle-text">Today</p>
         </div>
         
-        <div className="glass-card p-6 text-center">
+        <div className="glass-card p-6 text-center stagger-2 float-drift-left">
           <CheckSquare className="w-8 h-8 text-slate-600 dark:text-slate-300 mx-auto mb-2" />
           <h3 className="font-semibold text-slate-700 dark:text-slate-200 mb-1">
             Tasks Completed
           </h3>
-          <p className="text-2xl font-bold text-slate-900 dark:text-white">0</p>
+          <p className="metric-value text-slate-900 dark:text-white">0</p>
           <p className="text-sm subtitle-text">This Week</p>
         </div>
         
-        <div className="glass-card p-6 text-center">
+        <div className="glass-card p-6 text-center stagger-3 float-drift-right">
           <Target className="w-8 h-8 text-slate-600 dark:text-slate-300 mx-auto mb-2" />
           <h3 className="font-semibold text-slate-700 dark:text-slate-200 mb-1">
             Productivity Score
           </h3>
-          <p className="text-2xl font-bold text-slate-900 dark:text-white">--</p>
+          <p className="metric-value text-slate-900 dark:text-white">--</p>
           <p className="text-sm subtitle-text">Weekly Average</p>
         </div>
         
-        <div className="glass-card p-6 text-center">
+        <div className="glass-card p-6 text-center stagger-4 float-subtle">
           <Calendar className="w-8 h-8 text-slate-600 dark:text-slate-300 mx-auto mb-2" />
           <h3 className="font-semibold text-slate-700 dark:text-slate-200 mb-1">
             Streak
           </h3>
-          <p className="text-2xl font-bold text-slate-900 dark:text-white">0</p>
+          <p className="metric-value text-slate-900 dark:text-white">0</p>
           <p className="text-sm subtitle-text">Days</p>
         </div>
       </div>

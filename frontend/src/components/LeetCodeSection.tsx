@@ -271,13 +271,13 @@ export function LeetCodeSection() {
 
       {/* Summary Stats */}
       <div className="grid gap-6 md:grid-cols-3">
-        <div className="leetcode-stat-card">
+        <div className="leetcode-stat-card stagger-1 float-gentle">
           <h3 className="text-lg font-semibold text-slate-600 dark:text-slate-300 mb-2">Total Problems</h3>
-          <p className="text-3xl font-bold text-slate-900 dark:text-white">{pagination.totalProblems}</p>
+          <p className="metric-value text-slate-900 dark:text-white">{pagination.totalProblems}</p>
         </div>
-        <div className="leetcode-stat-card">
+        <div className="leetcode-stat-card stagger-2 float-drift-left">
           <h3 className="text-lg font-semibold text-slate-600 dark:text-slate-300 mb-2">This Week</h3>
-          <p className="text-3xl font-bold text-slate-900 dark:text-white">
+          <p className="metric-value text-slate-900 dark:text-white">
             {problems.filter(p => {
               const weekAgo = new Date()
               weekAgo.setDate(weekAgo.getDate() - 7)
@@ -285,9 +285,9 @@ export function LeetCodeSection() {
             }).length}
           </p>
         </div>
-        <div className="leetcode-stat-card">
+        <div className="leetcode-stat-card stagger-3 float-drift-right">
           <h3 className="text-lg font-semibold text-slate-600 dark:text-slate-300 mb-2">Average Time</h3>
-          <p className="text-3xl font-bold text-slate-900 dark:text-white">
+          <p className="metric-value text-slate-900 dark:text-white">
             {problems.length > 0 ? 
               Math.round(problems.reduce((sum, p) => sum + p.timeSpent, 0) / problems.length) + 'm' : 
               '0m'
