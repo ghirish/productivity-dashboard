@@ -23,7 +23,14 @@ import {
   Zap,
   Target,
   Github,
-  X
+  X,
+  Calendar,
+  BarChart3,
+  Circle,
+  Edit,
+  Trash2,
+  GripVertical,
+  Flag
 } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog'
 import { Textarea } from './ui/textarea'
@@ -129,106 +136,15 @@ const GitHubContributionChart: React.FC<GitHubContributionChartProps> = ({ contr
   )
 }
 
-// Weekly Tasks Widget Component
-interface WeeklyTasksWidgetProps {
-  onTaskUpdate: (day: string, taskId: string) => void
-  selectedDay: string
-  onDaySelect: (day: string) => void
-  refreshTrigger: number
-}
-
-const WeeklyTasksWidget: React.FC<WeeklyTasksWidgetProps> = ({ 
-  onTaskUpdate, 
-  selectedDay, 
-  onDaySelect, 
-  refreshTrigger 
-}) => {
-  const [weeklyTasks, setWeeklyTasks] = useState<any>({})
-  
-  const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-
-  useEffect(() => {
-    const savedTasks = localStorage.getItem('weeklyTodos')
-    if (savedTasks) {
-      setWeeklyTasks(JSON.parse(savedTasks))
-    }
-  }, [refreshTrigger])
-
-  const getTasksForDay = (day: string) => {
-    return weeklyTasks[day] || []
-  }
-
-  const getCompletedCount = (day: string) => {
-    const dayTasks = getTasksForDay(day)
-    return dayTasks.filter((task: any) => task.completed).length
-  }
-
-  const isToday = (day: string) => {
-    return new Date().toLocaleDateString('en-US', { weekday: 'long' }) === day
-  }
-
-  return (
-    <div className="grid grid-cols-7 gap-2">
-      {daysOfWeek.map((day) => {
-        const dayTasks = getTasksForDay(day)
-        const completedCount = getCompletedCount(day)
-        const isSelected = selectedDay === day
-        const isTodayDay = isToday(day)
-
-        return (
-          <div
-            key={day}
-            onClick={() => onDaySelect(day)}
-            className={`p-3 rounded-lg border cursor-pointer transition-all hover:shadow-md ${
-              isSelected 
-                ? 'border-slate-400 dark:border-slate-500 bg-slate-50 dark:bg-slate-800' 
-                : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900'
-            } ${isTodayDay ? 'ring-2 ring-blue-200 dark:ring-blue-800' : ''}`}
-          >
-            <div className="text-center">
-              <div className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
-                {day.slice(0, 3)}
-                {isTodayDay && <div className="text-xs text-blue-600 dark:text-blue-400">Today</div>}
-              </div>
-              <div className="text-lg font-bold text-slate-900 dark:text-white">
-                {dayTasks.length}
-              </div>
-              <div className="text-xs text-slate-500 dark:text-slate-400">
-                {completedCount} done
-              </div>
-              <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1 mt-2">
-                <div
-                  className="bg-slate-900 dark:bg-white h-1 rounded-full transition-all duration-300"
-                  style={{
-                    width: `${dayTasks.length > 0 ? (completedCount / dayTasks.length) * 100 : 0}%`
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-        )
-      })}
-    </div>
-  )
-}
+// Weekly Tasks Widget Component - REMOVED, now using IntegratedWeeklyPlanner
 
 export const Overview: React.FC = () => {
   // State management
   const [leetCodeStreak, setLeetCodeStreak] = useState(7)
   const [problemsSolved, setProblemsSolved] = useState(142)
-  const [todayTasks, setTodayTasks] = useState<any[]>([])
   const [pomodoroSessionsToday, setPomodoroSessionsToday] = useState(0)
   const [githubData, setGithubData] = useState<any>(null)
-  const [selectedDay, setSelectedDay] = useState<string>(new Date().toLocaleDateString('en-US', { weekday: 'long' }))
-  const [showAddDialog, setShowAddDialog] = useState(false)
   const [refreshTrigger, setRefreshTrigger] = useState(0)
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    priority: 'medium' as 'low' | 'medium' | 'high',
-    category: 'work' as 'work' | 'personal' | 'learning' | 'health' | 'other',
-    estimatedTime: ''
-  })
 
   // Jobs Dashboard Component
   const [jobs, setJobs] = useState<any[]>([])
@@ -250,19 +166,6 @@ export const Overview: React.FC = () => {
     location: '',
     source: 'all'
   })
-
-  // Get today's day string
-  const today = new Date().toLocaleDateString('en-US', { weekday: 'long' })
-
-  // Load tasks for selected day from localStorage
-  useEffect(() => {
-    const savedTasks = localStorage.getItem('weeklyTodos')
-    if (savedTasks) {
-      const weeklyData = JSON.parse(savedTasks)
-      const tasks = weeklyData[selectedDay] || []
-      setTodayTasks(tasks) // Show all tasks for selected day
-    }
-  }, [selectedDay])
 
   // Load today's Pomodoro sessions
   useEffect(() => {
@@ -309,112 +212,8 @@ export const Overview: React.FC = () => {
     fetchGitHubData()
   }, [])
 
-  const completedToday = todayTasks.filter(task => task.completed).length
-
   const handleStartFocusSession = () => {
     window.location.href = '/productivity'
-  }
-
-  const handleTaskUpdate = (day: string, taskId: string) => {
-    // Reload tasks if the updated day is the currently selected day
-    if (day === selectedDay) {
-      const savedTasks = localStorage.getItem('weeklyTodos')
-      if (savedTasks) {
-        const weeklyData = JSON.parse(savedTasks)
-        const tasks = weeklyData[selectedDay] || []
-        setTodayTasks(tasks)
-      }
-    }
-  }
-
-  const handleDaySelect = (day: string) => {
-    setSelectedDay(day)
-  }
-
-  const resetForm = () => {
-    setFormData({
-      title: '',
-      description: '',
-      priority: 'medium',
-      category: 'work',
-      estimatedTime: ''
-    })
-  }
-
-  const handleAddTask = () => {
-    if (!formData.title.trim()) return
-
-    const newTask = {
-      id: `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      title: formData.title.trim(),
-      description: formData.description.trim() || undefined,
-      completed: false,
-      priority: formData.priority,
-      category: formData.category,
-      estimatedTime: formData.estimatedTime ? parseInt(formData.estimatedTime) : undefined,
-      day: selectedDay,
-      createdAt: new Date(),
-      completedAt: undefined
-    }
-
-    // Update localStorage directly like WeeklyTodos does
-    const savedTasks = localStorage.getItem('weeklyTodos')
-    const weeklyTasks = savedTasks ? JSON.parse(savedTasks) : {
-      Monday: [], Tuesday: [], Wednesday: [], Thursday: [], Friday: [], Saturday: [], Sunday: []
-    }
-    
-    weeklyTasks[selectedDay] = [...(weeklyTasks[selectedDay] || []), newTask]
-    localStorage.setItem('weeklyTodos', JSON.stringify(weeklyTasks))
-
-    // Update local state and trigger refresh
-    setTodayTasks(weeklyTasks[selectedDay])
-    
-    // Trigger update for WeeklyTasksWidget
-    handleTaskUpdate(selectedDay, newTask.id)
-    setRefreshTrigger(prev => prev + 1)
-    
-    resetForm()
-    setShowAddDialog(false)
-  }
-
-  const openAddDialog = () => {
-    resetForm()
-    setShowAddDialog(true)
-  }
-
-  const closeAddDialog = () => {
-    setShowAddDialog(false)
-    resetForm()
-  }
-
-  const toggleTask = (taskId: string) => {
-    const updatedTasks = todayTasks.map(task => 
-      task.id === taskId ? { ...task, completed: !task.completed } : task
-    )
-    setTodayTasks(updatedTasks)
-    
-    // Save to localStorage
-    const savedTasks = localStorage.getItem('weeklyTodos')
-    if (savedTasks) {
-      const weeklyData = JSON.parse(savedTasks)
-      weeklyData[selectedDay] = updatedTasks
-      localStorage.setItem('weeklyTodos', JSON.stringify(weeklyData))
-    }
-  }
-
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'high': return 'border-red-200 text-red-700 bg-red-50 dark:border-red-800 dark:text-red-300 dark:bg-red-950/30'
-      case 'medium': return 'border-amber-200 text-amber-700 bg-amber-50 dark:border-amber-800 dark:text-amber-300 dark:bg-amber-950/30'
-      case 'low': return 'border-green-200 text-green-700 bg-green-50 dark:border-green-800 dark:text-green-300 dark:bg-green-950/30'
-      default: return 'border-slate-200 text-slate-700 bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:bg-slate-800'
-    }
-  }
-
-  const priorityColors = {
-    low: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200',
-    medium: 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200',
-    high: 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-200'
   }
 
   const API_BASE = process.env.REACT_APP_API_URL || 'http://127.0.0.1:3002'
@@ -610,90 +409,10 @@ export const Overview: React.FC = () => {
           </Link>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
-            {/* Weekly Tasks Overview - Left Side */}
-            <div className="lg:col-span-2">
-              <div className="mb-4">
-                <h3 className="font-semibold text-slate-700 dark:text-slate-200 mb-2">
-                  Weekly Overview
-                </h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
-                  Click on a day to view its tasks in detail
-                </p>
-              </div>
-              <WeeklyTasksWidget 
-                onTaskUpdate={handleTaskUpdate}
-                selectedDay={selectedDay}
-                onDaySelect={handleDaySelect}
-                refreshTrigger={refreshTrigger}
-              />
-            </div>
-
-            {/* Today's Tasks Detail - Right Side */}
-            <div className="lg:col-span-1">
-              <div className="mb-4">
-                <h3 className="font-semibold text-slate-700 dark:text-slate-200 mb-2">
-                  Today's Tasks ({new Date(selectedDay).toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' })})
-                </h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
-                  {todayTasks.filter(t => !t.completed).length} remaining
-                </p>
-              </div>
-              <div className="space-y-3 max-h-96 overflow-y-auto">
-                {todayTasks.length === 0 ? (
-                  <div className="text-center py-8 text-slate-400 dark:text-slate-500">
-                    <Clock className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                    <p>No tasks for today</p>
-                    <p className="text-sm">Create a new task to get started</p>
-                  </div>
-                ) : (
-                  todayTasks.map((task) => (
-                                         <div key={task.id} className="task-item">
-                                             <div className="flex items-start gap-3 w-full">
-                         <button
-                           onClick={() => toggleTask(task.id)}
-                           className={`flex-shrink-0 w-5 h-5 rounded border-2 transition-all duration-200 mt-1 ${
-                             task.completed 
-                               ? 'bg-emerald-500 border-emerald-500' 
-                               : 'border-slate-300 dark:border-slate-600 hover:border-emerald-400'
-                           }`}
-                         >
-                           {task.completed && (
-                             <CheckCircle className="w-3 h-3 text-white m-0.5" />
-                           )}
-                         </button>
-                        
-                        <div className="flex-1">
-                          <h4 className={`font-medium ${
-                            task.completed 
-                              ? 'text-emerald-700 dark:text-emerald-300 line-through' 
-                              : 'text-slate-900 dark:text-white'
-                          }`}>
-                            {task.title}
-                          </h4>
-                          <div className="flex items-center gap-2 mt-1">
-                            <Badge 
-                              variant="outline" 
-                              className={`text-xs ${getPriorityColor(task.priority)}`}
-                            >
-                              {task.priority}
-                            </Badge>
-                            {task.estimatedTime && (
-                              <span className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                                <Clock className="w-3 h-3" />
-                                {task.estimatedTime}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          </div>
+          <IntegratedWeeklyPlanner 
+            refreshTrigger={refreshTrigger}
+            onRefreshTrigger={() => setRefreshTrigger(prev => prev + 1)}
+          />
         </CardContent>
       </Card>
 
@@ -737,105 +456,7 @@ export const Overview: React.FC = () => {
           </CardContent>
         </Card>
 
-      {/* Add Task Dialog */}
-      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Plus className="w-5 h-5" />
-              Add Task to {selectedDay}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-200 mb-2 block">
-                Task Title *
-              </label>
-              <Input
-                placeholder="Enter task title..."
-                value={formData.title}
-                onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                className="w-full"
-              />
-      </div>
 
-            <div>
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-200 mb-2 block">
-                Description
-              </label>
-              <Textarea
-                placeholder="Add a description (optional)..."
-                value={formData.description}
-                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                className="w-full h-20 resize-none"
-              />
-    </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium text-slate-700 dark:text-slate-200 mb-2 block">
-                  Priority
-                </label>
-                <select
-                  value={formData.priority}
-                  onChange={(e) => setFormData(prev => ({ ...prev, priority: e.target.value as any }))}
-                  className="w-full p-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
-                >
-                  <option value="low">🟢 Low</option>
-                  <option value="medium">🟡 Medium</option>
-                  <option value="high">🔴 High</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-slate-700 dark:text-slate-200 mb-2 block">
-                  Category
-                </label>
-                <select
-                  value={formData.category}
-                  onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value as any }))}
-                  className="w-full p-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
-                >
-                  <option value="work">💼 Work</option>
-                  <option value="personal">👤 Personal</option>
-                  <option value="learning">📚 Learning</option>
-                  <option value="health">💪 Health</option>
-                  <option value="other">📝 Other</option>
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-200 mb-2 block">
-                Estimated Time (minutes)
-              </label>
-              <Input
-                type="number"
-                placeholder="e.g., 30"
-                value={formData.estimatedTime}
-                onChange={(e) => setFormData(prev => ({ ...prev, estimatedTime: e.target.value }))}
-                className="w-full"
-                min="1"
-                max="480"
-              />
-            </div>
-
-            <div className="flex gap-3 pt-4">
-              <Button onClick={closeAddDialog} variant="outline" className="flex-1">
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleAddTask} 
-                className="flex-1 modern-button"
-                disabled={!formData.title.trim()}
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Task
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }
