@@ -65,6 +65,13 @@ const getGitHubHeaders = () => ({
 // GET /api/github/user - Get authenticated user info
 router.get('/user', async (req, res) => {
   try {
+    // Set cache control headers to prevent caching
+    res.set({
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    })
+
     if (!process.env.GITHUB_TOKEN) {
       return res.status(401).json({ error: 'GitHub token not configured' })
     }
@@ -96,6 +103,13 @@ router.get('/user', async (req, res) => {
 // GET /api/github/contributions - Get contribution data
 router.get('/contributions', async (req, res) => {
   try {
+    // Set cache control headers to prevent caching
+    res.set({
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    })
+
     if (!process.env.GITHUB_TOKEN || !process.env.GITHUB_USERNAME) {
       return res.status(401).json({ error: 'GitHub credentials not configured' })
     }
@@ -104,22 +118,48 @@ router.get('/contributions', async (req, res) => {
     const now = new Date()
     const oneYearAgo = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate())
     
-    const response: AxiosResponse<GitHubSearchResponse> = await axios.get(`https://api.github.com/search/commits`, {
-      headers: {
-        ...getGitHubHeaders(),
-        'Accept': 'application/vnd.github.cloak-preview+json'
-      },
-      params: {
-        q: `author:${username} committer-date:>${oneYearAgo.toISOString().split('T')[0]}`,
-        sort: 'committer-date',
-        order: 'desc',
-        per_page: 100
+    // Fetch multiple pages to get more comprehensive data
+    let allCommits: GitHubCommit[] = []
+    let page = 1
+    const maxPages = 10 // Limit to prevent excessive API calls
+    
+    while (page <= maxPages) {
+      try {
+        const response: AxiosResponse<GitHubSearchResponse> = await axios.get(`https://api.github.com/search/commits`, {
+          headers: {
+            ...getGitHubHeaders(),
+            'Accept': 'application/vnd.github.cloak-preview+json'
+          },
+          params: {
+            q: `author:${username} committer-date:>${oneYearAgo.toISOString().split('T')[0]}`,
+            sort: 'committer-date',
+            order: 'desc',
+            per_page: 100,
+            page: page
+          }
+        })
+        
+        const commits = response.data.items || []
+        if (commits.length === 0) break // No more commits
+        
+        allCommits = allCommits.concat(commits)
+        page++
+        
+        // Add a small delay to avoid hitting rate limits
+        if (page <= maxPages) {
+          await new Promise(resolve => setTimeout(resolve, 100))
+        }
+      } catch (pageError) {
+        console.log(`Error fetching page ${page}, stopping pagination:`, pageError)
+        break
       }
-    })
+    }
 
     // Process commits by date
     const commitsByDate: { [key: string]: number } = {}
-    const commits = response.data.items || []
+    const commits = allCommits
+    
+    console.log(`Fetched ${commits.length} total commits for ${username}`)
 
     commits.forEach((commit: GitHubCommit) => {
       const date = commit.commit.committer.date.split('T')[0]

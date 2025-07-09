@@ -52,14 +52,60 @@ interface GitHubContributionChartProps {
   contributionData: any
 }
 
+// Tooltip component for contribution chart
+interface TooltipProps {
+  date: string
+  count: number
+  x: number
+  y: number
+  visible: boolean
+}
+
+const ContributionTooltip: React.FC<TooltipProps> = ({ date, count, x, y, visible }) => {
+  if (!visible) return null
+
+  const formatTooltipDate = (dateString: string): string => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric'
+    })
+  }
+
+  return (
+    <div
+      className="fixed z-50 bg-slate-900 dark:bg-slate-700 text-white text-xs px-3 py-2 rounded-lg shadow-xl border border-slate-600 pointer-events-none transform -translate-x-1/2 -translate-y-full"
+      style={{
+        left: x,
+        top: y - 8,
+      }}
+    >
+      <div className="font-medium">{count} contribution{count !== 1 ? 's' : ''}</div>
+      <div className="text-slate-300">{formatTooltipDate(date)}</div>
+      <div
+        className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-slate-900 dark:border-t-slate-700"
+      />
+    </div>
+  )
+}
+
 const GitHubContributionChart: React.FC<GitHubContributionChartProps> = ({ contributionData }) => {
+  const [tooltip, setTooltip] = useState<TooltipProps>({
+    date: '',
+    count: 0,
+    x: 0,
+    y: 0,
+    visible: false
+  })
+
   const getContributionColor = (level: number): string => {
     const colors = [
       'bg-slate-100 dark:bg-slate-800', // 0 contributions
-      'bg-emerald-200 dark:bg-emerald-900', // 1-2 contributions
-      'bg-emerald-400 dark:bg-emerald-700', // 3-4 contributions
-      'bg-emerald-600 dark:bg-emerald-500', // 5-7 contributions
-      'bg-emerald-800 dark:bg-emerald-300'  // 8+ contributions
+      'bg-green-200 dark:bg-green-900', // 1-2 contributions
+      'bg-green-400 dark:bg-green-600', // 3-4 contributions
+      'bg-green-500 dark:bg-green-500', // 5-7 contributions
+      'bg-green-600 dark:bg-green-400'  // 8+ contributions
     ]
     return colors[Math.min(level, 4)]
   }
@@ -70,6 +116,23 @@ const GitHubContributionChart: React.FC<GitHubContributionChartProps> = ({ contr
       day: 'numeric',
       year: 'numeric'
     })
+  }
+
+  const handleMouseEnter = (dayData: any, event: React.MouseEvent) => {
+    if (dayData) {
+      const rect = (event.target as HTMLElement).getBoundingClientRect()
+      setTooltip({
+        date: dayData.date,
+        count: dayData.count,
+        x: rect.left + rect.width / 2,
+        y: rect.top, // Use viewport coordinates directly
+        visible: true
+      })
+    }
+  }
+
+  const handleMouseLeave = () => {
+    setTooltip(prev => ({ ...prev, visible: false }))
   }
 
   if (!contributionData?.contributions?.contributionData) {
@@ -86,7 +149,7 @@ const GitHubContributionChart: React.FC<GitHubContributionChartProps> = ({ contr
   const contributions = contributionData.contributions
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 relative">
       {/* Contribution grid */}
       <div className="overflow-x-auto">
         <div className="flex-1 flex gap-1">
@@ -98,8 +161,9 @@ const GitHubContributionChart: React.FC<GitHubContributionChartProps> = ({ contr
                 return dayData ? (
                   <div
                     key={dayIndex}
-                    className={`w-3 h-3 rounded-sm ${getContributionColor(dayData.level)}`}
-                    title={`${dayData.count} contributions on ${formatDate(dayData.date)}`}
+                    className={`w-3 h-3 rounded-sm cursor-pointer transition-all duration-200 hover:ring-2 hover:ring-slate-400 dark:hover:ring-slate-500 hover:scale-110 ${getContributionColor(dayData.level)}`}
+                    onMouseEnter={(e) => handleMouseEnter(dayData, e)}
+                    onMouseLeave={handleMouseLeave}
                   />
                 ) : (
                   <div
@@ -132,6 +196,9 @@ const GitHubContributionChart: React.FC<GitHubContributionChartProps> = ({ contr
           <span className="text-xs text-slate-500 dark:text-slate-400">More</span>
         </div>
       </div>
+
+      {/* Tooltip */}
+      <ContributionTooltip {...tooltip} />
     </div>
   )
 }
@@ -187,15 +254,7 @@ const priorityIcons = {
 }
 
 // Integrated Weekly Tasks Component
-interface IntegratedWeeklyPlannerProps {
-  refreshTrigger: number
-  onRefreshTrigger: () => void
-}
-
-const IntegratedWeeklyPlanner: React.FC<IntegratedWeeklyPlannerProps> = ({ 
-  refreshTrigger, 
-  onRefreshTrigger 
-}) => {
+const IntegratedWeeklyPlanner: React.FC = () => {
   const [tasks, setTasks] = useState<DayTasks>({
     Monday: [],
     Tuesday: [],
@@ -242,15 +301,15 @@ const IntegratedWeeklyPlanner: React.FC<IntegratedWeeklyPlannerProps> = ({
       }
     }
     setIsInitialized(true)
-  }, [refreshTrigger])
+  }, [])
 
   // Save tasks to localStorage
   useEffect(() => {
     if (isInitialized) {
       localStorage.setItem('weeklyTodos', JSON.stringify(tasks))
-      onRefreshTrigger()
+      // Remove onRefreshTrigger() call to prevent infinite loops
     }
-  }, [tasks, isInitialized]) // Remove onRefreshTrigger from dependencies
+  }, [tasks, isInitialized])
 
   const resetForm = () => {
     setFormData({
@@ -725,7 +784,8 @@ export const Overview: React.FC = () => {
   const [problemsSolved, setProblemsSolved] = useState(142)
   const [pomodoroSessionsToday, setPomodoroSessionsToday] = useState(0)
   const [githubData, setGithubData] = useState<any>(null)
-  const [refreshTrigger, setRefreshTrigger] = useState(0)
+  const [githubRefreshing, setGithubRefreshing] = useState(false)
+  const [githubLastUpdated, setGithubLastUpdated] = useState<Date | null>(null)
 
   // Jobs Dashboard Component
   const [jobs, setJobs] = useState<any[]>([])
@@ -762,44 +822,70 @@ export const Overview: React.FC = () => {
     }
   }, [])
 
-  // Load GitHub data
-  useEffect(() => {
-    const fetchGitHubData = async () => {
-      try {
-        const API_BASE = process.env.REACT_APP_API_URL || 'http://127.0.0.1:3002'
-        const [userRes, contributionsRes] = await Promise.allSettled([
-          fetch(`${API_BASE}/api/github/user`),
-          fetch(`${API_BASE}/api/github/contributions`)
-        ])
+  // GitHub data fetching function
+  const fetchGitHubData = useCallback(async (showRefreshing: boolean = false) => {
+    try {
+      if (showRefreshing) setGithubRefreshing(true)
+      
+      const API_BASE = process.env.REACT_APP_API_URL || 'http://127.0.0.1:3002'
+      const timestamp = Date.now()
+      
+      const [userRes, contributionsRes] = await Promise.allSettled([
+        fetch(`${API_BASE}/api/github/user?_t=${timestamp}`, {
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          }
+        }),
+        fetch(`${API_BASE}/api/github/contributions?_t=${timestamp}`, {
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          }
+        })
+      ])
 
-        const data: any = {}
-        
-        if (userRes.status === 'fulfilled' && userRes.value.ok) {
-          data.user = await userRes.value.json()
-        }
-        
-        if (contributionsRes.status === 'fulfilled' && contributionsRes.value.ok) {
-          data.contributions = await contributionsRes.value.json()
-        }
-        
-        if (Object.keys(data).length > 0) {
-          setGithubData(data)
-        }
-      } catch (error) {
-        console.error('Failed to fetch GitHub data:', error)
+      const data: any = {}
+      
+      if (userRes.status === 'fulfilled' && userRes.value.ok) {
+        data.user = await userRes.value.json()
       }
+      
+      if (contributionsRes.status === 'fulfilled' && contributionsRes.value.ok) {
+        data.contributions = await contributionsRes.value.json()
+      }
+      
+      if (Object.keys(data).length > 0) {
+        setGithubData(data)
+        setGithubLastUpdated(new Date())
+      }
+    } catch (error) {
+      console.error('Failed to fetch GitHub data:', error)
+    } finally {
+      if (showRefreshing) setGithubRefreshing(false)
     }
-
-    fetchGitHubData()
   }, [])
+
+  // Manual refresh function
+  const handleGithubRefresh = () => {
+    fetchGitHubData(true)
+  }
+
+  // Load GitHub data with automatic refresh every hour
+  useEffect(() => {
+    // Initial fetch
+    fetchGitHubData()
+
+    // Set up automatic refresh every hour (3600000 ms)
+    const refreshInterval = setInterval(() => fetchGitHubData(), 3600000)
+
+    // Cleanup interval on component unmount
+    return () => clearInterval(refreshInterval)
+  }, [fetchGitHubData])
 
   const handleStartFocusSession = () => {
     window.location.href = '/productivity'
   }
-
-  const handleRefreshTrigger = useCallback(() => {
-    setRefreshTrigger(prev => prev + 1)
-  }, [])
 
   const API_BASE = process.env.REACT_APP_API_URL || 'http://127.0.0.1:3002'
 
@@ -964,16 +1050,34 @@ export const Overview: React.FC = () => {
                 Your coding journey over the past year
               </CardDescription>
             </div>
-            <Link to="/integrations">
-              <Button size="sm" variant="outline" className="border-slate-300 dark:border-slate-600">
-                <Github className="w-4 h-4 mr-2" />
-                View Dashboard
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleGithubRefresh}
+                disabled={githubRefreshing}
+                className="border-slate-300 dark:border-slate-600"
+              >
+                <RefreshCw className={`w-4 h-4 mr-2 ${githubRefreshing ? 'animate-spin' : ''}`} />
+                Refresh
               </Button>
-            </Link>
+              <Link to="/integrations">
+                <Button size="sm" variant="outline" className="border-slate-300 dark:border-slate-600">
+                  <Github className="w-4 h-4 mr-2" />
+                  View Dashboard
+                </Button>
+              </Link>
+            </div>
           </div>
           </CardHeader>
         <CardContent>
           <GitHubContributionChart contributionData={githubData} />
+          {githubLastUpdated && (
+            <div className="mt-4 text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2">
+              <Clock className="w-3 h-3" />
+              Last updated: {githubLastUpdated.toLocaleString()}
+            </div>
+          )}
           </CardContent>
         </Card>
 
@@ -994,10 +1098,7 @@ export const Overview: React.FC = () => {
           </Link>
         </CardHeader>
         <CardContent>
-          <IntegratedWeeklyPlanner 
-            refreshTrigger={refreshTrigger}
-            onRefreshTrigger={handleRefreshTrigger}
-          />
+          <IntegratedWeeklyPlanner />
         </CardContent>
       </Card>
 
