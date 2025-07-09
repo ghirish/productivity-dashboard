@@ -104,6 +104,38 @@ router.get('/', async (req, res) => {
 
   } catch (error: any) {
     console.error('Error fetching jobs:', error)
+    
+    // If database is not connected, return empty data structure
+    if (error.message?.includes('connect') || error.message?.includes('ENOTFOUND')) {
+      console.log('Database not connected, returning empty jobs data')
+      return res.json({
+        jobs: [],
+        pagination: {
+          currentPage: 1,
+          totalPages: 0,
+          totalJobs: 0,
+          hasNext: false,
+          hasPrev: false
+        },
+        summary: {
+          total: 0,
+          new: 0,
+          interested: 0,
+          applied: 0,
+          interview: 0,
+          rejected: 0,
+          offer: 0
+        },
+        filters: {
+          days: parseInt((req.query.days as string) || '3'),
+          status: req.query.status,
+          company: req.query.company,
+          location: req.query.location,
+          source: req.query.source
+        }
+      })
+    }
+    
     res.status(500).json({ error: 'Failed to fetch jobs', message: error.message })
   }
 })
@@ -400,6 +432,30 @@ router.get('/stats', async (req, res) => {
 
   } catch (error: any) {
     console.error('Error fetching job stats:', error)
+    
+    // If database is not connected, return empty stats
+    if (error.message?.includes('connect') || error.message?.includes('ENOTFOUND')) {
+      console.log('Database not connected, returning empty job stats')
+      return res.json({
+        totalJobs: 0,
+        recentJobs: 0,
+        newJobsToday: 0,
+        daysRange: parseInt((req.query.days as string) || '7'),
+        byStatus: {
+          new: 0,
+          interested: 0,
+          applied: 0,
+          interview: 0,
+          rejected: 0,
+          offer: 0,
+          newToday: 0
+        },
+        bySource: {},
+        topCompanies: [],
+        dailyActivity: []
+      })
+    }
+    
     res.status(500).json({ error: 'Failed to fetch job statistics', message: error.message })
   }
 })
