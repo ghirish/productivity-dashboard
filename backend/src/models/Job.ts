@@ -102,11 +102,11 @@ const jobSchema = new Schema<IJob>({
   toJSON: {
     transform: function(doc, ret) {
       // Ensure all dates are in ISO format
-      if (ret.postedDate) ret.postedDate = ret.postedDate.toISOString()
-      if (ret.scrapedAt) ret.scrapedAt = ret.scrapedAt.toISOString()
-      if (ret.appliedAt) ret.appliedAt = ret.appliedAt.toISOString()
-      if (ret.createdAt) ret.createdAt = ret.createdAt.toISOString()
-      if (ret.updatedAt) ret.updatedAt = ret.updatedAt.toISOString()
+      if (ret.postedDate && typeof ret.postedDate !== 'string') ret.postedDate = ret.postedDate.toISOString()
+      if (ret.scrapedAt && typeof ret.scrapedAt !== 'string') ret.scrapedAt = ret.scrapedAt.toISOString()
+      if (ret.appliedAt && typeof ret.appliedAt !== 'string') ret.appliedAt = ret.appliedAt.toISOString()
+      if (ret.createdAt && typeof ret.createdAt !== 'string') ret.createdAt = ret.createdAt.toISOString()
+      if (ret.updatedAt && typeof ret.updatedAt !== 'string') ret.updatedAt = ret.updatedAt.toISOString()
       return ret
     }
   }

@@ -83,8 +83,12 @@ const LeetCodeProblemSchema = new Schema<ILeetCodeProblem>({
   toJSON: {
     virtuals: true,
     transform: function(doc, ret) {
-      ret._id = ret._id.toString()
-      delete ret.__v
+      if (ret._id) {
+        ret._id = ret._id.toString()
+      }
+      if (ret.__v !== undefined) {
+        delete ret.__v
+      }
       return ret
     }
   }
