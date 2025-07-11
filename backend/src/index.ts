@@ -40,12 +40,17 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }))
 // Database connection
 const connectDB = async () => {
   try {
-    const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/productivity_dashboard'
+    const mongoURI = process.env.MONGODB_URI
+    if (!mongoURI) {
+      console.log('⚠️  No MONGODB_URI provided - running without database')
+      console.log('💡 Add MongoDB Atlas URI to environment variables to enable database features')
+      return
+    }
     await mongoose.connect(mongoURI)
     console.log('✅ Connected to MongoDB')
   } catch (error: any) {
     console.warn('⚠️  MongoDB connection failed - running without database:', error.message)
-    console.log('💡 You can add MongoDB Atlas URI to .env file later')
+    console.log('💡 You can add MongoDB Atlas URI to environment variables later')
   }
 }
 
